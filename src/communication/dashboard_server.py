@@ -8,6 +8,9 @@ WEB_DIR = "web"
 
 os.makedirs(os.path.join(WEB_DIR, "assets"), exist_ok=True)
 shutil.copy("src/map0/map.png", os.path.join(WEB_DIR, "assets", "map.png"))
+shutil.copy("images/car.png", os.path.join(WEB_DIR, "assets", "car.png"))
+shutil.copy("images/car_best.png", os.path.join(WEB_DIR, "assets", "car_best.png"))
+shutil.copy("images/car_worst.png", os.path.join(WEB_DIR, "assets", "car_worst.png"))
 
 ai = serversocket.AICLient(host="localhost", port=8081)
 
@@ -35,6 +38,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         try:
             ack = ai.send_command(command)
             print(f"Command sent: {command} -> {ack}")
+            if command == "RESET":
+                # Signal ai_racetrack.py to reset its epoch counter to 1
+                signal_path = os.path.join(WEB_DIR, "reset.signal")
+                open(signal_path, "w").close()
             self.send_response(200)
         except Exception as e:
             print(f"Error sending {command}: {e}")
