@@ -1,7 +1,6 @@
 import configparser
 
 config = configparser.ConfigParser()
-# .properties files don't have sections by default, so we wrap them in a dummy section
 with open("config.properties") as stream:
     config.read_string("[DEFAULT]\n" + stream.read())
 

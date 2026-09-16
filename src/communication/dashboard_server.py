@@ -15,7 +15,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 import serversocket
-import config
 
 WEB_DIR = "web"
 
