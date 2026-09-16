@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import importlib
+import importlib
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -43,6 +44,7 @@ START_X, START_Y = getattr(checkpoints, 'START_POS', (0, 0))
 def spawn_population(size):
     cars = []
     for _ in range(size):
+        c = game.Player("images/car.png", START_X, START_Y)
         c = game.Player("images/car.png", START_X, START_Y)
         c.alive = True
         c.fitness = 0.0
