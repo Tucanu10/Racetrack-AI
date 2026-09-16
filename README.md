@@ -35,34 +35,4 @@ The architecture is divided into three core components:
 
 ---
 
-## 📁 Project Structure
-
-```text
-Racetrack-AI/
-├── Makefile
-├── champion.dat
-├── images/
-│   └── car.png
-├── src/
-│   ├── ai/
-│   │   - Network.java
-│   │   - Neuron.java
-│   │   - Util.java
-│   │   - raycasting.py
-│   ├── communication/
-│   │   - Server.java
-│   │   - dashboard_server.py
-│   │   - serversocket.py
-│   ├── engine/
-│   │   - ai_racetrack.py
-│   │   - debug.py
-│   │   - game.py
-│   │   - racetrack.py
-│   └── map0/
-│       - checkpoints.py
-│       - map.png
-└── web/
-    ├── assets/
-    │   - map.png
-    ├── index.html
-    └── state.json
+## To learn more about making custom maps and how to train the neural network, check out the [Map Making Guide](docs/map-guide.md)

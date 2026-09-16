@@ -1,19 +1,32 @@
 import os
+import sys
 import shutil
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 import serversocket
+import engine.config as config
 
 WEB_DIR = "web"
 
 os.makedirs(os.path.join(WEB_DIR, "assets"), exist_ok=True)
-shutil.copy("src/map0/map.png", os.path.join(WEB_DIR, "assets", "map.png"))
+shutil.copy(f"src/{config.ACTIVE_MAP}/map.png", os.path.join(WEB_DIR, "assets", "map.png"))
 shutil.copy("images/car.png", os.path.join(WEB_DIR, "assets", "car.png"))
 shutil.copy("images/car_best.png", os.path.join(WEB_DIR, "assets", "car_best.png"))
 shutil.copy("images/car_worst.png", os.path.join(WEB_DIR, "assets", "car_worst.png"))
 
-ai = serversocket.AICLient(host="localhost", port=8081)
+ai = None
 
+def get_ai():
+    global ai
+    if ai is None:
+        try:
+            ai = serversocket.AICLient(host="localhost", port=config.COMMUNICATION_PORT)
+        except Exception as e:
+            print(f"Could not connect to AI server: {e}")
+    return ai
 
 class DashboardHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -35,11 +48,15 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         super().log_message(format, *args)
 
     def _send_command(self, command):
+        client = get_ai()
+        if client is None:
+            self.send_response(503)
+            self.end_headers()
+            return
         try:
-            ack = ai.send_command(command)
+            ack = client.send_command(command)
             print(f"Command sent: {command} -> {ack}")
             if command == "RESET":
-                # Signal ai_racetrack.py to reset its epoch counter to 1
                 signal_path = os.path.join(WEB_DIR, "reset.signal")
                 open(signal_path, "w").close()
             self.send_response(200)
@@ -50,5 +67,5 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print("Dashboard server listening on http://localhost:8000")
-    HTTPServer(("localhost", 8000), DashboardHandler).serve_forever()
+    print("Dashboard server listening on http://localhost:" + str(config.DASH_PORT))
+    HTTPServer(("localhost", config.DASH_PORT), DashboardHandler).serve_forever()

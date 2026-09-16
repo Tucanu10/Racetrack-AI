@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import ai.Network;
+import engine.Config;
 
 public class Server {
     private static final int POPULATION_SIZE = 200;
@@ -40,8 +41,8 @@ public class Server {
             }
         }
 
-        try (ServerSocket serverSocket = new ServerSocket(8081)) {
-            System.out.println("Population server listening on port 8081");
+        try (ServerSocket serverSocket = new ServerSocket(Config.COMMUNICATION_PORT)) {
+            System.out.println("Population server listening on port " + Config.COMMUNICATION_PORT);
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client connected: " + clientSocket.getInetAddress());

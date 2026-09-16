@@ -1,17 +1,22 @@
 import sys
 import os
 import json
+import importlib
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pygame
 import engine.game as game
 import engine.debug as debug
-import map0.checkpoints as checkpoints
 import communication.serversocket as serversocket
 import ai.raycasting as raycasting
 import math
 import time
+import engine.config as config
+
+# Dynamically load the active map's checkpoints and image
+checkpoints = importlib.import_module(f"{config.ACTIVE_MAP}.checkpoints")
+MAP_IMAGE_PATH = f"src/{config.ACTIVE_MAP}/map.png"
 
 pygame.init()
 screen = pygame.display.set_mode((1080, 720))
@@ -29,13 +34,16 @@ img_normal = pygame.transform.scale(pygame.image.load("images/car.png").convert_
 img_best = pygame.transform.scale(pygame.image.load("images/car_best.png").convert_alpha(), (40, 40))
 img_worst = pygame.transform.scale(pygame.image.load("images/car_worst.png").convert_alpha(), (40, 40))
 
-track_map = game.Track("src/map0/map.png")
-ai = serversocket.AICLient(host='localhost', port=8081)
+track_map = game.Track(MAP_IMAGE_PATH)
+ai = serversocket.AICLient(host='localhost', port=config.COMMUNICATION_PORT)
+
+# Fetch custom start pos if defined in checkpoints.py, otherwise default to (83, 325)
+START_X, START_Y = getattr(checkpoints, 'START_POS', (0, 0))
 
 def spawn_population(size):
     cars = []
     for _ in range(size):
-        c = game.Player("images/car.png", 83, 325)
+        c = game.Player("images/car.png", START_X, START_Y)
         c.alive = True
         c.fitness = 0.0
         c.current_lap_time = 0.0
@@ -110,7 +118,8 @@ while running:
             "hidden": [],
             "outputs": [0, 0],
             "stats": {"epoch": epoch, "time": 0.0, "checkpoint": 0, "laps": 0, "alive_cars": POP_SIZE, "pop_size": POP_SIZE},
-            "pos": {"x": 83, "y": 325, "angle": 0}
+            "pos": {"x": START_X, "y": START_Y, "angle": 0},
+            "others": []
         }
         temp_path = "web/state.json.tmp"
         target_path = "web/state.json"
@@ -186,7 +195,6 @@ while running:
             if crashed or car.time_since_last_checkpoint > 4.0:
                 car.alive = False
 
-            # Update the web dashboard ONLY for the true lead car
             # Update the web dashboard ONLY for the true lead car
             if not lead_dashboard_updated and idx == active_indices[0]:
                 distances, _ = raycasting.get_data(car, track_map.mask, 2000)

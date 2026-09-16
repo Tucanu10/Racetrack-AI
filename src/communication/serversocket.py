@@ -2,8 +2,10 @@ import socket
 import threading
 import time
 
+import engine.config as config
+
 class AICLient:
-    def __init__(self, host='localhost', port=8081, retry_interval=1.0):
+    def __init__(self, host='localhost', port=config.COMMUNICATION_PORT, retry_interval=1.0):
         
         self.sock = None
         while self.sock is None:

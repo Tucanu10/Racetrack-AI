@@ -5,7 +5,7 @@ play:
 
 run-ai:
 	@echo "Compiling Java..."
-	@javac.exe src/ai/*.java src/communication/*.java
+	@javac.exe src/**/*.java
 	@echo "Starting Java Server..."
 	@java.exe -cp src communication.Server
 	make clean
@@ -27,5 +27,6 @@ train:
 clean:
 	@echo "Cleaning cache files..."
 	@rm -rf src/**/*__pycache__
+	@rm -rf src/**/*.pyc
 	@rm -rf src/**/*.class
 	@rm -rf src/**/*.tmp
