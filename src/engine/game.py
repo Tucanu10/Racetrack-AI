@@ -32,6 +32,8 @@ class Player(pygame.sprite.Sprite):
 
         self.current_checkpoint = 0
         self.laps = 0
+        self.current_lap_time = 0
+        self.time_since_last_checkpoint = 0.0
 
     def rotate(self, angle):
         self.angle += angle
@@ -72,10 +74,12 @@ class Player(pygame.sprite.Sprite):
 
         if self.rect.colliderect(target):
             self.current_checkpoint += 1
+            self.time_since_last_checkpoint = 0.0 # Reset timer on success
+            
             print(f"Checkpoint {self.current_checkpoint} reached!")
             if self.current_checkpoint >= len(checkpoints):
                 self.current_checkpoint = 0
-                return True # Lap completed
+                return True 
 
             return False
         return False

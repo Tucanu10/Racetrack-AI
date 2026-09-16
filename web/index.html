@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Racetrack AI — Telemetry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg: #0b0f14;
+        --panel: #10161d;
+        --panel-border: #212a34;
+        --accent: #ff8a3d;
+        --accent-soft: rgba(255, 138, 61, 0.14);
+        --secondary: #48cae4;
+        --text-main: #e8edf2;
+        --text-muted: #62707d;
+        --good: #4ade80;
+        --bad: #ff5d5d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        background:
+            linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px) 0 0 / 100% 32px,
+            linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px) 0 0 / 32px 100%,
+            var(--bg);
+        color: var(--text-main);
+        font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 28px 24px 40px;
+        min-height: 100vh;
+    }
+
+    .mono { font-family: 'IBM Plex Mono', monospace; }
+
+    header {
+        max-width: 1180px;
+        margin: 0 auto 22px;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        border-bottom: 1px solid var(--panel-border);
+        padding-bottom: 16px;
+    }
+
+    header h1 {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: 0.2px;
+    }
+
+    header h1 span { color: var(--accent); }
+
+    #status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    #status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+        transition: background 0.3s ease;
+    }
+
+    #status-dot.live {
+        background: var(--good);
+        box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
+        animation: pulse 1.8s infinite;
+    }
+
+    #status-dot.lost { background: var(--bad); }
+
+    @keyframes pulse {
+        0%   { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.45); }
+        70%  { box-shadow: 0 0 0 7px rgba(74, 222, 128, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+    }
+
+    .wrap { max-width: 1180px; margin: 0 auto; }
+
+    #gauges {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .gauge {
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 10px;
+        padding: 16px 18px;
+    }
+
+    .gauge .value {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 28px;
+        font-weight: 600;
+        color: var(--accent);
+        line-height: 1.1;
+    }
+
+    .gauge .value .unit {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin-left: 4px;
+    }
+
+    .gauge .label {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .panels {
+        display: flex;
+        gap: 16px;
+        align-items: stretch;
+        flex-wrap: wrap;
+    }
+
+    .panel {
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 10px;
+        overflow: hidden;
+        flex: 1 1 460px;
+    }
+
+    .panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--panel-border);
+    }
+
+    .panel-head h2 {
+        font-size: 13px;
+        font-weight: 600;
+        margin: 0;
+        color: var(--text-main);
+    }
+
+    .panel-head .tag {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: var(--secondary);
+        background: rgba(72, 202, 228, 0.12);
+        padding: 3px 8px;
+        border-radius: 20px;
+    }
+
+    .panel-body {
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+    }
+
+    canvas { display: block; max-width: 100%; height: auto; }
+
+    .controls { display: flex; gap: 8px; }
+
+    .btn {
+        background: transparent;
+        color: var(--text-muted);
+        border: 1px solid var(--panel-border);
+        padding: 5px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+        background: var(--accent-soft);
+    }
+
+    @media (max-width: 720px) {
+        #gauges { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+</head>
+<body>
+    <header>
+        <h1>Racetrack<span>AI</span> <span style="color:var(--text-muted); font-weight:500;">/ telemetry</span></h1>
+        <div id="status"><span id="status-dot"></span><span id="status-text">connecting…</span></div>
+    </header>
+
+    <div class="wrap">
+        <div id="gauges">
+            <div class="gauge">
+                <div class="value mono" id="ui-epoch">–</div>
+                <div class="label">Generation</div>
+            </div>
+            <div class="gauge">
+                <div class="value mono" id="ui-time">–<span class="unit">s</span></div>
+                <div class="label">Lap time</div>
+            </div>
+            <div class="gauge">
+                <div class="value mono" id="ui-check">–</div>
+                <div class="label">Checkpoint</div>
+            </div>
+            <div class="gauge">
+                <div class="value mono" id="ui-laps">–</div>
+                <div class="label">Laps</div>
+            </div>
+        </div>
+
+        <div class="panels">
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>Neural activity — lead car</h2>
+                    <span class="tag" id="net-shape">–</span>
+                </div>
+                <div class="panel-body">
+                    <canvas id="networkCanvas" width="640" height="560"></canvas>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>Track position</h2>
+                    <div class="controls">
+                        <button class="btn" onclick="fetch('/save')">Save champion</button>
+                        <button class="btn" onclick="fetch('/load')">Load champion</button>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <canvas id="mapCanvas" width="1080" height="720" style="width:100%; max-width:640px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const netCanvas = document.getElementById('networkCanvas');
+        const netCtx = netCanvas.getContext('2d');
+
+        const mapCanvas = document.getElementById('mapCanvas');
+        const mapCtx = mapCanvas.getContext('2d');
+
+        // Track image is copied into web/assets/ by ai_racetrack.py at startup -
+        // it lives outside the directory the dashboard server exposes, so it
+        // has to be mirrored in rather than referenced with a '../' path.
+        const mapImg = new Image();
+        mapImg.src = 'assets/map.png';
+
+        function drawMapAndCar(pos) {
+            mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+
+            if (mapImg.complete && mapImg.naturalWidth !== 0) {
+                mapCtx.drawImage(mapImg, 0, 0, mapCanvas.width, mapCanvas.height);
+            } else {
+                mapCtx.fillStyle = '#161d24';
+                mapCtx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+                mapCtx.fillStyle = '#62707d';
+                mapCtx.font = "14px 'IBM Plex Mono', monospace";
+                mapCtx.textAlign = 'center';
+                mapCtx.fillText('loading track…', mapCanvas.width / 2, mapCanvas.height / 2);
+            }
+
+            if (pos) {
+                mapCtx.save();
+                mapCtx.translate(pos.x, pos.y);
+                mapCtx.rotate(-pos.angle * Math.PI / 180);
+
+                mapCtx.fillStyle = '#ff8a3d';
+                mapCtx.fillRect(-10, -20, 20, 40);
+
+                mapCtx.fillStyle = '#e8edf2';
+                mapCtx.fillRect(-10, -20, 20, 10);
+
+                mapCtx.restore();
+            }
+        }
+
+        function drawNetwork(layers) {
+            netCtx.clearRect(0, 0, netCanvas.width, netCanvas.height);
+            const xSpacing = (netCanvas.width - 140) / Math.max(1, layers.length - 1);
+            const startX = 70;
+            const nodeRadius = layers.some(l => l.length > 8) ? 10 : 15;
+            const inputLabels = ["-45°", "-30°", "-15°", "0°", "15°", "30°", "45°"];
+            const outputLabels = ["Steering", "Throttle"];
+            const lastCol = layers.length - 1;
+            let nodePositions = [];
+
+            layers.forEach((layer, colIndex) => {
+                const x = startX + (colIndex * xSpacing);
+                const ySpacing = Math.min(70, netCanvas.height / (layer.length + 1));
+                const startY = (netCanvas.height - ((layer.length - 1) * ySpacing)) / 2;
+                let colPositions = [];
+                layer.forEach((val, rowIndex) => {
+                    const y = startY + (rowIndex * ySpacing);
+                    colPositions.push({ x, y, val, colIndex, rowIndex });
+                });
+                nodePositions.push(colPositions);
+            });
+
+            netCtx.lineWidth = 1.5;
+            for (let c = 0; c < nodePositions.length - 1; c++) {
+                for (let n1 of nodePositions[c]) {
+                    for (let n2 of nodePositions[c + 1]) {
+                        const intensity = Math.max(0.08, n1.val);
+                        netCtx.strokeStyle = `rgba(72, 202, 228, ${intensity * 0.45})`;
+                        netCtx.beginPath();
+                        netCtx.moveTo(n1.x, n1.y);
+                        netCtx.lineTo(n2.x, n2.y);
+                        netCtx.stroke();
+                    }
+                }
+            }
+
+            nodePositions.forEach(col => {
+                col.forEach(node => {
+                    const intensity = Math.max(0, Math.min(1, node.val));
+                    netCtx.beginPath();
+                    netCtx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI);
+                    netCtx.fillStyle = `rgba(255, 138, 61, ${0.15 + intensity * 0.75})`;
+                    netCtx.fill();
+                    netCtx.lineWidth = 1.5;
+                    netCtx.strokeStyle = intensity > 0.5 ? "#ff8a3d" : "#2a3540";
+                    netCtx.stroke();
+
+                    netCtx.fillStyle = "#e8edf2";
+                    netCtx.font = "11px 'IBM Plex Mono', monospace";
+
+                    let label = "";
+                    let align = "center";
+                    if (node.colIndex === 0) { label = inputLabels[node.rowIndex] || ""; align = "right"; }
+                    else if (node.colIndex === lastCol) { label = outputLabels[node.rowIndex] || ""; align = "left"; }
+
+                    netCtx.textBaseline = "middle";
+                    if (align === "right") {
+                        netCtx.textAlign = "right";
+                        netCtx.fillText(`${label}  ${node.val.toFixed(2)}`, node.x - 22, node.y);
+                    } else if (align === "left") {
+                        netCtx.textAlign = "left";
+                        netCtx.fillText(`${node.val.toFixed(2)}  ${label}`, node.x + 22, node.y);
+                    } else {
+                        netCtx.textAlign = "center";
+                        netCtx.fillText(node.val.toFixed(2), node.x, node.y - 22);
+                    }
+                });
+            });
+        }
+
+        function setStatus(live) {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            dot.className = live ? 'live' : 'lost';
+            text.textContent = live ? 'live' : 'no signal';
+        }
+
+        async function updateDashboard() {
+            try {
+                const response = await fetch('state.json?' + Date.now());
+                const data = await response.json();
+
+                document.getElementById('ui-epoch').textContent = data.stats.epoch;
+                document.getElementById('ui-time').innerHTML = data.stats.time.toFixed(2) + '<span class="unit">s</span>';
+                document.getElementById('ui-check').textContent = data.stats.checkpoint;
+                document.getElementById('ui-laps').textContent = data.stats.laps;
+
+                drawNetwork([data.inputs, ...data.hidden, data.outputs]);
+                document.getElementById('net-shape').textContent =
+                    [data.inputs.length, ...data.hidden.map(l => l.length), data.outputs.length].join(' → ');
+                drawMapAndCar(data.pos);
+                setStatus(true);
+            } catch (error) {
+                setStatus(false);
+            }
+            requestAnimationFrame(updateDashboard);
+        }
+
+        updateDashboard();
+    </script>
+</body>
+</html>
