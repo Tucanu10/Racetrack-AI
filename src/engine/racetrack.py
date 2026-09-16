@@ -7,7 +7,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pygame
 import game
 import debug
+<<<<<<< HEAD
 import engine.config as config
+=======
+import config
+>>>>>>> 58922c6b5309900c6d75bff9520bef709c41ee41
 
 # Dynamically load the active map's checkpoints and image
 checkpoints = importlib.import_module(f"{config.ACTIVE_MAP}.checkpoints")
