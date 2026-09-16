@@ -12,6 +12,11 @@ def draw_pos_info(screen, player, font):
     screen.blit(pos_text, (10, 35))
     screen.blit(angle_text, (10, 60))
 
+def draw_population_info(screen, cars, font):
+    alive_cars = sum(1 for c in cars if c.alive)
+    population_text = font.render(f"Population: {len(cars)}, Alive: {alive_cars}", True, (255, 255, 255))
+    screen.blit(population_text, (10, 85))
+
 def draw_mouse_pos(screen, font):
     mouse_x, mouse_y = pygame.mouse.get_pos()
     mouse_text = font.render(f"Mouse: ({mouse_x}, {mouse_y})", True, (255, 255, 255))

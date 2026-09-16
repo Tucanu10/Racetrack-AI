@@ -75,8 +75,8 @@ class Player(pygame.sprite.Sprite):
         if self.rect.colliderect(target):
             self.current_checkpoint += 1
             self.time_since_last_checkpoint = 0.0 # Reset timer on success
-            
-            print(f"Checkpoint {self.current_checkpoint} reached!")
+
+            print(f"Lap {self.laps + 1}, Checkpoint {self.current_checkpoint} reached at {self.current_lap_time:.2f} seconds!")
             if self.current_checkpoint >= len(checkpoints):
                 self.current_checkpoint = 0
                 return True 

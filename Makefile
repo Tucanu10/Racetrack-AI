@@ -13,6 +13,7 @@ run-ai:
 run-ai-client:
 	@echo "Running AI Client..."
 	@python.exe src/engine/ai_racetrack.py
+	make clean
 
 clean:
 	@echo "Cleaning cache files..."
@@ -21,4 +22,4 @@ clean:
 
 run-web:
 	@echo "Starting Local Web Dashboard..."
-	@cd web && python.exe -m http.server 8000
+	@python.exe src/communication/dashboard_server.py

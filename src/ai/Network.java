@@ -7,21 +7,18 @@ import java.util.Random;
 
 public class Network implements Serializable {
     private static final long serialVersionUID = 1L;
-    private static final int INPUTS = 7;
+    private static final int INPUTS = 9;
 
     List<List<Neuron>> hiddenLayers = new ArrayList<>();
     List<Neuron> outputLayer = new ArrayList<>();
 
-    // 1. Normal Constructor
     public Network(int numHiddenLayers, int neuronsPerLayer) {
-        // Create the first hidden layer connected to the inputs
         List<Neuron> firstLayer = new ArrayList<>();
         for (int i = 0; i < neuronsPerLayer; i++) {
             firstLayer.add(new Neuron(INPUTS));
         }
         hiddenLayers.add(firstLayer);
 
-        // Create subsequent hidden layers connected to the previous layer
         for (int l = 1; l < numHiddenLayers; l++) {
             List<Neuron> layer = new ArrayList<>();
             for (int i = 0; i < neuronsPerLayer; i++) {
@@ -30,14 +27,13 @@ public class Network implements Serializable {
             hiddenLayers.add(layer);
         }
 
-        // Create output layer connected to the last hidden layer
         for (int i = 0; i < 2; i++) {
             outputLayer.add(new Neuron(neuronsPerLayer));
         }
     }
 
+    // Constructor de copiere
     public Network(Network copy) {
-        // Deep copy all hidden layers
         for (List<Neuron> layer : copy.hiddenLayers) {
             List<Neuron> newLayer = new ArrayList<>();
             for (Neuron n : layer) {
@@ -45,38 +41,45 @@ public class Network implements Serializable {
             }
             this.hiddenLayers.add(newLayer);
         }
-        // Deep copy the output layer
         for (Neuron n : copy.outputLayer) {
             this.outputLayer.add(new Neuron(n));
         }
     }
 
-    // 3. Mutate Method for deep layers
-    private static final Random RANDOM = new Random();
-    // Chance that any given neuron mutates. Mutating exactly one neuron per
-    // call, regardless of network size, means a 2x6 network (~90 params) only
-    // ever differs from its parent by a single weight or bias - far too
-    // sparse to explore the space in a reasonable number of generations.
-    private static final double MUTATION_RATE = 0.15;
+    public Network(Network p1, Network p2) {
+        for (int l = 0; l < p1.hiddenLayers.size(); l++) {
+            List<Neuron> layer1 = p1.hiddenLayers.get(l);
+            List<Neuron> layer2 = p2.hiddenLayers.get(l);
+            List<Neuron> newLayer = new ArrayList<>();
+            for (int i = 0; i < layer1.size(); i++) {
+                newLayer.add(new Neuron(layer1.get(i), layer2.get(i)));
+            }
+            this.hiddenLayers.add(newLayer);
+        }
+        for (int i = 0; i < p1.outputLayer.size(); i++) {
+            this.outputLayer.add(new Neuron(p1.outputLayer.get(i), p2.outputLayer.get(i)));
+        }
+    }
 
-    public void mutate() {
+    private static final Random RANDOM = new Random();
+
+    public void mutate(double mutationRate) {
         boolean mutatedAny = false;
         for (List<Neuron> layer : hiddenLayers) {
             for (Neuron n : layer) {
-                if (RANDOM.nextDouble() < MUTATION_RATE) {
+                if (RANDOM.nextDouble() < mutationRate) {
                     n.mutate();
                     mutatedAny = true;
                 }
             }
         }
         for (Neuron n : outputLayer) {
-            if (RANDOM.nextDouble() < MUTATION_RATE) {
+            if (RANDOM.nextDouble() < mutationRate) {
                 n.mutate();
                 mutatedAny = true;
             }
         }
 
-        // Guarantee at least one mutation so "mutate()" never becomes a no-op
         if (!mutatedAny) {
             List<Neuron> allNeurons = new ArrayList<>();
             for (List<Neuron> layer : hiddenLayers) {
@@ -87,12 +90,10 @@ public class Network implements Serializable {
         }
     }
 
-    // 4. Predict Method
     public double[] predict(double... inputs) {
         double[] currentInputs = inputs;
         List<double[]> allHiddenOutputs = new ArrayList<>();
 
-        // Feed forward through all hidden layers
         for (List<Neuron> layer : hiddenLayers) {
             double[] nextInputs = new double[layer.size()];
             for (int i = 0; i < layer.size(); i++) {
@@ -102,14 +103,9 @@ public class Network implements Serializable {
             currentInputs = nextInputs;
         }
 
-        // Compute final outputs
         double outSteering = outputLayer.get(0).compute(currentInputs);
         double outThrottle = outputLayer.get(1).compute(currentInputs);
 
-        // Layout: [steering, throttle, numHiddenLayers, layer0Size, layer0..., layer1Size, layer1..., ...]
-        // This carries every neuron in every hidden layer instead of a fixed
-        // 3-value slice of just the first layer, so the dashboard can draw
-        // the network's true shape.
         int total = 3 + allHiddenOutputs.size();
         for (double[] layerOut : allHiddenOutputs) total += layerOut.length;
 
@@ -125,7 +121,6 @@ public class Network implements Serializable {
         return result;
     }
     
-    // 5. Save and Load methods
     public void save(String filepath) {
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filepath))) {
             out.writeObject(this);
@@ -141,7 +136,7 @@ public class Network implements Serializable {
             return (Network) in.readObject();
         } catch (Exception e) {
             System.out.println("No save found. Starting fresh.");
-            return new Network(2, 6);
+            return new Network(2, 10); // 2 hidden layers, 10 neurons each
         }
     }
 }

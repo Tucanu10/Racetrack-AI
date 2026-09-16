@@ -10,8 +10,8 @@
         --bg: #0b0f14;
         --panel: #10161d;
         --panel-border: #212a34;
-        --accent: #ff8a3d;
-        --accent-soft: rgba(255, 138, 61, 0.14);
+        --accent: #4ade80;
+        --accent-soft: rgba(74, 222, 128, 0.40);
         --secondary: #48cae4;
         --text-main: #e8edf2;
         --text-muted: #62707d;
@@ -87,12 +87,12 @@
         100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
     }
 
-    .wrap { max-width: 1180px; margin: 0 auto; }
+    .wrap { max-width: min(1280px, 94vw); margin: 0 auto; }
 
     #gauges {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 14px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 7px;
         margin-bottom: 20px;
     }
 
@@ -136,6 +136,8 @@
         border-radius: 10px;
         overflow: hidden;
         flex: 1 1 460px;
+        display: flex;
+        flex-direction: column;
     }
 
     .panel-head {
@@ -166,7 +168,55 @@
         padding: 10px;
         display: flex;
         justify-content: center;
+        flex-grow: 1;
     }
+
+    .map-body {
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    #action-log {
+        width: 100%;
+        max-width: 640px;
+        font-size: 11px;
+        color: var(--text-muted);
+        line-height: 1.6;
+        max-height: 85px;
+        overflow-y: auto;
+        border-top: 1px solid var(--panel-border);
+        padding: 8px 4px 4px 4px;
+        margin-top: auto;
+    }
+
+    #action-log::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #action-log::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 4px;
+    }
+
+    #action-log::-webkit-scrollbar-thumb {
+        background: var(--panel-border);
+        border-radius: 4px;
+    }
+
+    #action-log::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+    }
+
+    #action-log .entry {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    #action-log .entry.ok { color: var(--good); }
+    #action-log .entry.err { color: var(--bad); }
 
     canvas { display: block; max-width: 100%; height: auto; }
 
@@ -190,14 +240,18 @@
         background: var(--accent-soft);
     }
 
-    @media (max-width: 720px) {
+    @media (max-width: 900px) {
+        #gauges { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 520px) {
         #gauges { grid-template-columns: repeat(2, 1fr); }
     }
 </style>
 </head>
 <body>
     <header>
-        <h1>Racetrack<span>AI</span> <span style="color:var(--text-muted); font-weight:500;">/ telemetry</span></h1>
+        <h1>Racetrack<span>AI</span> <span style="color:var(--text-muted); font-weight:500;">/ Self Learning Neural Network</span></h1>
         <div id="status"><span id="status-dot"></span><span id="status-text">connecting…</span></div>
     </header>
 
@@ -219,6 +273,10 @@
                 <div class="value mono" id="ui-laps">–</div>
                 <div class="label">Laps</div>
             </div>
+            <div class="gauge">
+                <div class="value mono" id="ui-alive">–<span class="unit">/–</span></div>
+                <div class="label">Alive cars</div>
+            </div>
         </div>
 
         <div class="panels">
@@ -236,12 +294,14 @@
                 <div class="panel-head">
                     <h2>Track position</h2>
                     <div class="controls">
-                        <button class="btn" onclick="fetch('/save')">Save champion</button>
-                        <button class="btn" onclick="fetch('/load')">Load champion</button>
+                        <button class="btn" onclick="sendAction('/save', 'Save Champion requested')">Save champion</button>
+                        <button class="btn" onclick="sendAction('/load', 'Load Champion requested')">Load champion</button>
+                        <button class="btn" onclick="sendAction('/reset', 'Reset requested')">Reset</button>
                     </div>
                 </div>
-                <div class="panel-body">
+                <div class="panel-body map-body">
                     <canvas id="mapCanvas" width="1080" height="720" style="width:100%; max-width:640px;"></canvas>
+                    <div id="action-log"></div>
                 </div>
             </div>
         </div>
@@ -254,9 +314,6 @@
         const mapCanvas = document.getElementById('mapCanvas');
         const mapCtx = mapCanvas.getContext('2d');
 
-        // Track image is copied into web/assets/ by ai_racetrack.py at startup -
-        // it lives outside the directory the dashboard server exposes, so it
-        // has to be mirrored in rather than referenced with a '../' path.
         const mapImg = new Image();
         mapImg.src = 'assets/map.png';
 
@@ -291,10 +348,10 @@
 
         function drawNetwork(layers) {
             netCtx.clearRect(0, 0, netCanvas.width, netCanvas.height);
-            const xSpacing = (netCanvas.width - 140) / Math.max(1, layers.length - 1);
-            const startX = 70;
+            const xSpacing = (netCanvas.width - 400) / Math.max(1, layers.length - 1);
+            const startX = 200;
             const nodeRadius = layers.some(l => l.length > 8) ? 10 : 15;
-            const inputLabels = ["-45°", "-30°", "-15°", "0°", "15°", "30°", "45°"];
+            const inputLabels = ["-45°", "-30°", "-15°", "0°", "15°", "30°", "45°", "Speed", "Angle to Checkpoint"];
             const outputLabels = ["Steering", "Throttle"];
             const lastCol = layers.length - 1;
             let nodePositions = [];
@@ -311,7 +368,7 @@
                 nodePositions.push(colPositions);
             });
 
-            netCtx.lineWidth = 1.5;
+            netCtx.lineWidth = 2;
             for (let c = 0; c < nodePositions.length - 1; c++) {
                 for (let n1 of nodePositions[c]) {
                     for (let n2 of nodePositions[c + 1]) {
@@ -330,10 +387,10 @@
                     const intensity = Math.max(0, Math.min(1, node.val));
                     netCtx.beginPath();
                     netCtx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI);
-                    netCtx.fillStyle = `rgba(255, 138, 61, ${0.15 + intensity * 0.75})`;
+                    netCtx.fillStyle = `rgba(74, 222, 128, ${0.15 + intensity * 0.75})`;
                     netCtx.fill();
-                    netCtx.lineWidth = 1.5;
-                    netCtx.strokeStyle = intensity > 0.5 ? "#ff8a3d" : "#2a3540";
+                    netCtx.lineWidth = 2;
+                    netCtx.strokeStyle = intensity > 0.5 ? "#4ade80" : "#2a3540";
                     netCtx.stroke();
 
                     netCtx.fillStyle = "#e8edf2";
@@ -366,25 +423,86 @@
             text.textContent = live ? 'live' : 'no signal';
         }
 
-        async function updateDashboard() {
-            try {
-                const response = await fetch('state.json?' + Date.now());
-                const data = await response.json();
+        let lastLaps = 0;
+    let lastEpoch = -1;
+    let lastTime = 0;
+    let lastCheckpoint = 0;
 
-                document.getElementById('ui-epoch').textContent = data.stats.epoch;
-                document.getElementById('ui-time').innerHTML = data.stats.time.toFixed(2) + '<span class="unit">s</span>';
-                document.getElementById('ui-check').textContent = data.stats.checkpoint;
-                document.getElementById('ui-laps').textContent = data.stats.laps;
+    async function updateDashboard() {
+        try {
+            const response = await fetch('state.json?' + Date.now());
+            if (!response.ok) throw new Error("File fetch failed");
+            const data = await response.json();
+            const stats = data.stats;
 
-                drawNetwork([data.inputs, ...data.hidden, data.outputs]);
-                document.getElementById('net-shape').textContent =
-                    [data.inputs.length, ...data.hidden.map(l => l.length), data.outputs.length].join(' → ');
-                drawMapAndCar(data.pos);
-                setStatus(true);
-            } catch (error) {
-                setStatus(false);
+            if (lastEpoch === -1) {
+                lastEpoch = stats.epoch;
+                lastLaps = stats.laps;
+                lastTime = stats.time;
+                lastCheckpoint = stats.checkpoint;
             }
-            requestAnimationFrame(updateDashboard);
+
+            if (stats.laps > lastLaps) {
+                addLog(`Lap ${stats.laps} completed! Time: ${lastTime.toFixed(2)}s`, 'ok');
+                lastLaps = stats.laps;
+            }
+
+            if (stats.epoch > lastEpoch) {
+                addLog(`Generation ${lastEpoch} finished. Starting Generation ${stats.epoch}.`, 'err');
+                lastEpoch = stats.epoch;
+                lastLaps = 0;
+                lastCheckpoint = 0;
+                lastTime = 0;
+            }
+
+            if (stats.time < lastTime && stats.laps === lastLaps && stats.epoch === lastEpoch) {
+                addLog(`Lead car crashed at checkpoint ${lastCheckpoint}!`, 'err');
+            }
+
+            lastTime = stats.time;
+            lastCheckpoint = stats.checkpoint;
+
+            document.getElementById('ui-epoch').textContent = stats.epoch;
+            document.getElementById('ui-time').innerHTML = stats.time.toFixed(2) + '<span class="unit">s</span>';
+            document.getElementById('ui-check').textContent = stats.checkpoint;
+            document.getElementById('ui-laps').textContent = stats.laps;
+            const popSize = stats.pop_size !== undefined ? stats.pop_size : '200';
+            document.getElementById('ui-alive').innerHTML = (stats.alive_cars !== undefined ? stats.alive_cars : '–') + `<span class="unit">/${popSize}</span>`;
+
+            drawNetwork([data.inputs, ...data.hidden, data.outputs]);
+            document.getElementById('net-shape').textContent =
+                [data.inputs.length, ...data.hidden.map(l => l.length), data.outputs.length].join(' → ');
+            drawMapAndCar(data.pos);
+            setStatus(true);
+        } catch (error) {
+            setStatus(false);
+        }
+        requestAnimationFrame(updateDashboard);
+    }
+
+        function addLog(msg, kind) {
+            const log = document.getElementById('action-log');
+            if (!log) return;
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'entry' + (kind ? ' ' + kind : '');
+            entry.textContent = `[${time}] ${msg}`;
+            log.prepend(entry);
+            while (log.children.length > 5) log.removeChild(log.lastChild);
+        }
+
+        async function sendAction(endpoint, description) {
+            addLog(description);
+            try {
+                const res = await fetch(endpoint);
+                if (res.ok) {
+                    addLog(`Success: Command ${endpoint} executed.`, 'ok');
+                } else {
+                    addLog(`Error: Server responded with status ${res.status}`, 'err');
+                }
+            } catch (err) {
+                addLog(`Network Error: Failed to reach ${endpoint}`, 'err');
+            }
         }
 
         updateDashboard();

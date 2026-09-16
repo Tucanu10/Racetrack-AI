@@ -4,13 +4,14 @@ import json
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-import shutil
 import pygame
 import engine.game as game
 import engine.debug as debug
 import map0.checkpoints as checkpoints
 import communication.serversocket as serversocket
 import ai.raycasting as raycasting
+import math
+import time
 
 pygame.init()
 screen = pygame.display.set_mode((1080, 720))
@@ -19,39 +20,11 @@ running = True
 dt = 0
 debug_font = pygame.font.SysFont(None, 28)
 show_debug = False
-POP_SIZE = 100
+POP_SIZE = 200
 epoch = 1
 
 track_map = game.Track("src/map0/map.png")
-ai = serversocket.AICLient(host='localhost', port=8080)
-
-import threading
-from http.server import HTTPServer, SimpleHTTPRequestHandler
-
-class DashboardHandler(SimpleHTTPRequestHandler):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory="web", **kwargs)
-
-    def do_GET(self):
-        if self.path == '/save':
-            ai.sock.sendall("SAVE\n".encode('utf-8'))
-            self.send_response(200)
-            self.end_headers()
-        elif self.path == '/load':
-            ai.sock.sendall("LOAD\n".encode('utf-8'))
-            self.send_response(200)
-            self.end_headers()
-        else:
-            super().do_GET()
-
-# The dashboard's HTTP server only serves files out of web/, and index.html
-# was pointing at '../map0/map.png' which resolves outside that directory -
-# the request just 404s. Copy the track image into web/assets/ once at
-# startup so it's actually reachable.
-os.makedirs("web/assets", exist_ok=True)
-shutil.copy("src/map0/map.png", "web/assets/map.png")
-
-threading.Thread(target=lambda: HTTPServer(('localhost', 8000), DashboardHandler).serve_forever(), daemon=True).start()
+ai = serversocket.AICLient(host='localhost', port=8081)
 
 def spawn_population(size):
     cars = []
@@ -65,6 +38,9 @@ def spawn_population(size):
 
 cars = spawn_population(POP_SIZE)
 
+if 'prev_steppings' not in globals():
+    prev_steppings = {}
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -74,7 +50,16 @@ while running:
                 show_debug = not show_debug
             if event.key == pygame.K_s:
                 print("Saving champion network...")
-                ai.sock.sendall("SAVE\n".encode('utf-8'))
+                ai.send_command("SAVE")
+            if event.key == pygame.K_l:
+                print("Loading champion network...")
+                ai.send_command("LOAD")
+            if event.key == pygame.K_r:
+                print("Resetting population...")
+                ai.send_command("RESET")
+                cars = spawn_population(POP_SIZE)
+                epoch = 1
+                continue
 
     screen.fill((48, 51, 53))
     screen.blit(track_map.image, (0, 0))
@@ -88,6 +73,26 @@ while running:
         ai.send_epoch_end(scores)
         epoch += 1
         cars = spawn_population(POP_SIZE)
+        
+        init_state = {
+            "inputs": [0]*9,
+            "hidden": [],
+            "outputs": [0, 0],
+            "stats": {"epoch": epoch, "time": 0.0, "checkpoint": 0, "laps": 0, "alive_cars": POP_SIZE, "pop_size": POP_SIZE},
+            "pos": {"x": 83, "y": 325, "angle": 0}
+        }
+        temp_path = "web/state.json.tmp"
+        target_path = "web/state.json"
+        
+        with open(temp_path, "w") as f:
+            json.dump(init_state, f)
+            
+        for _ in range(5):
+            try:
+                os.replace(temp_path, target_path)
+                break
+            except PermissionError:
+                time.sleep(0.01)
         continue
 
     batch_payload_parts = []
@@ -95,53 +100,80 @@ while running:
 
     for idx in active_indices:
         car = cars[idx]
-        distances, hits = raycasting.get_data(car, track_map.mask, 250)
+        distances, hits = raycasting.get_data(car, track_map.mask, 2000)
         car_hitpoints[idx] = hits
-        norm_dists = [f"{d / 250.0:.4f}" for d in distances]
+        
+        current_speed = getattr(car, 'current_speed', 0.0)
+        speed_norm = current_speed / 200.0
+
+        target_rect = checkpoints.checkpoints[car.current_checkpoint]
+        target_center = (target_rect.centerx, target_rect.centery)
+        angle_to_target = math.degrees(math.atan2(target_center[1] - car.pos_y, target_center[0] - car.pos_x))
+        angle_diff = (car.angle - angle_to_target + 180) % 360 - 180
+        angle_norm = angle_diff / 180.0
+
+        norm_dists = [f"{d / 250.0:.4f}" for d in distances] + [f"{speed_norm:.4f}", f"{angle_norm:.4f}"]
         batch_payload_parts.append(f"{idx}:{','.join(norm_dists)}")
 
     commands = ai.get_batch_commands("|".join(batch_payload_parts))
 
-    lead_dashboard_updated = False # Ensure we only update JSON once per frame
+    lead_dashboard_updated = False
 
     for idx in active_indices:
         car = cars[idx]
         if idx in commands:
             st, th, hidden = commands[idx]
             actual_steering = (st * 2) - 1
+            
+            prev_st = prev_steppings.get(idx, actual_steering)
+            steering_jitter = abs(actual_steering - prev_st)
+            prev_steppings[idx] = actual_steering
+
             car.rotate(actual_steering * 300 * dt)
             speed = th * 200
+            car.current_speed = speed
 
             car.current_lap_time += dt
-            car.time_since_last_checkpoint += dt # Increment the new timer
+            car.time_since_last_checkpoint += dt
             
             crashed = car.move(speed, dt, track_map)
             laps = car.check_checkpoints(checkpoints.checkpoints)
             
             if laps > 0:
                 car.laps += int(laps)
+                car.current_lap_time = 0.0
 
-            # Kill car if it crashes OR takes more than 5 seconds to reach the next checkpoint
-            if crashed or car.time_since_last_checkpoint > 5.0:
+            target_rect = checkpoints.checkpoints[car.current_checkpoint]
+            target_center = (target_rect.centerx, target_rect.centery)
+            dist_to_target = math.hypot(car.pos_x - target_center[0], car.pos_y - target_center[1])
+
+            car.fitness = (car.current_checkpoint * 300) + (car.laps * 3000) - (dist_to_target * 0.05) - (car.current_lap_time * 2) - (steering_jitter * 15)
+            if th < 0.2:
+                car.fitness -= dt * 20
+
+            if crashed or car.time_since_last_checkpoint > 4.0:
                 car.alive = False
-                
-                # Subtract time to penalize slowness instead of rewarding it
-                car.fitness = (car.current_checkpoint * 100) + (car.laps * 1000) - (car.current_lap_time * 2)
 
             # Update the web dashboard with the lead car's brain
             if not lead_dashboard_updated:
-                distances, _ = raycasting.get_data(car, track_map.mask, 250)
-                lead_inputs = [d / 250.0 for d in distances]
+                distances, _ = raycasting.get_data(car, track_map.mask, 2000)
+                speed_norm = speed / 200.0
+                angle_diff = (car.angle - angle_to_target + 180) % 360 - 180
+                angle_norm = angle_diff / 180.0
+                
+                lead_inputs = [d / 250.0 for d in distances] + [speed_norm, angle_norm]
                 
                 network_state = {
                     "inputs": lead_inputs,
-                    "hidden": hidden,  # list of hidden layers, each a list of activations
+                    "hidden": hidden,  
                     "outputs": [st, th],
                     "stats": {
                         "epoch": epoch,
                         "time": round(car.current_lap_time, 2),
                         "checkpoint": car.current_checkpoint,
-                        "laps": car.laps
+                        "laps": car.laps,
+                        "alive_cars": len(active_indices),
+                        "pop_size": POP_SIZE
                     },
                     "pos": {
                         "x": car.pos_x,
@@ -149,8 +181,21 @@ while running:
                         "angle": car.angle
                     }
                 }
-                with open("web/state.json", "w") as f:
+                
+                temp_path = "web/state.json.tmp"
+                target_path = "web/state.json"
+                
+                with open(temp_path, "w") as f:
                     json.dump(network_state, f)
+                
+                for _ in range(5):
+                    try:
+                        os.replace(temp_path, target_path)
+                        break
+                    except PermissionError:
+                        import time
+                        time.sleep(0.01)
+                
                 lead_dashboard_updated = True
 
         screen.blit(car.image, car.rect.topleft)
@@ -158,18 +203,18 @@ while running:
     if show_debug:
         debug.draw_fps(screen, clock, debug_font)
         
-        # Only draw UI lines for the lead car to prevent clutter
         if active_indices:
             lead_idx = active_indices[0]
             lead_car = cars[lead_idx]
             debug.draw_pos_info(screen, lead_car, debug_font)
+            debug.draw_population_info(screen, cars, debug_font)
             debug.draw_rays(screen, lead_car, car_hitpoints[lead_idx])
 
         for checkpoint in checkpoints.checkpoints:
             pygame.draw.rect(screen, (0, 255, 0), checkpoint, 2) 
 
     pygame.display.flip()
-    dt = clock.tick(20) / 1000 
+    dt = clock.tick(100) / 1000 
 
 ai.close()
 pygame.quit()

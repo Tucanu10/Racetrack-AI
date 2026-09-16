@@ -1,9 +1,21 @@
 import socket
+import threading
+import time
 
 class AICLient:
-    def __init__(self, host='localhost', port=8080): # Corrected port to 8080
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((host, port))
+    def __init__(self, host='localhost', port=8081, retry_interval=1.0):
+        
+        self.sock = None
+        while self.sock is None:
+            candidate = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                candidate.connect((host, port))
+                self.sock = candidate
+            except (ConnectionRefusedError, OSError):
+                candidate.close()
+                print(f"Waiting for Java server at {host}:{port}...")
+                time.sleep(retry_interval)
+        self._lock = threading.Lock()
 
     def _recv_until_newline(self):
         response = ""
@@ -15,9 +27,10 @@ class AICLient:
         return response.strip()
 
     def get_batch_commands(self, payload):
-        self.sock.sendall((payload + "\n").encode('utf-8'))
-        response = self._recv_until_newline()
-        
+        with self._lock:
+            self.sock.sendall((payload + "\n").encode('utf-8'))
+            response = self._recv_until_newline()
+
         commands = {}
         if not response:
             return commands
@@ -45,8 +58,14 @@ class AICLient:
     
     def send_epoch_end(self, scores):
         payload = "EPOCH_END:" + ",".join(map(str, scores)) + "\n"
-        self.sock.sendall(payload.encode('utf-8'))
-        return self._recv_until_newline()
+        with self._lock:
+            self.sock.sendall(payload.encode('utf-8'))
+            return self._recv_until_newline()
+
+    def send_command(self, command):
+        with self._lock:
+            self.sock.sendall((command + "\n").encode('utf-8'))
+            return self._recv_until_newline()
 
     def close(self):
         self.sock.close()

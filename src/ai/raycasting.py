@@ -1,23 +1,23 @@
 import pygame
 import math
 
-def castrays(startx, starty, angle, track_mask, screen, ray_len):
+def castrays(startx, starty, angle, track_mask, screen_width, screen_height, ray_len):
     rad = math.radians(angle)
+    sin_rad = math.sin(rad)
+    cos_rad = math.cos(rad)
 
     for dist in range(ray_len):
-        checkx = int(startx - dist * math.sin(rad))
-        checky = int(starty - dist * math.cos(rad))
+        checkx = int(startx - dist * sin_rad)
+        checky = int(starty - dist * cos_rad)
 
-        if checkx < 0 or checkx >= screen.get_width() or checky < 0 or checky >= screen.get_height():
+        # Boundary checks replace the costly try-except block
+        if checkx < 0 or checkx >= screen_width or checky < 0 or checky >= screen_height:
             return dist, (checkx, checky)
 
-        try:
-            if track_mask.get_at((checkx, checky)):
-                return dist, (checkx, checky)
-        except IndexError:
-            pass
+        if track_mask.get_at((checkx, checky)):
+            return dist, (checkx, checky)
 
-    endpoint = (int(startx - ray_len * math.sin(rad)), int(starty - ray_len * math.cos(rad)))
+    endpoint = (int(startx - ray_len * sin_rad), int(starty - ray_len * cos_rad))
     return ray_len, endpoint
 
 def get_data(player, track_mask, ray_len):
@@ -25,8 +25,11 @@ def get_data(player, track_mask, ray_len):
     distances = []
     hitpoints = []
 
+    screen = pygame.display.get_surface()
+    sw, sh = screen.get_width(), screen.get_height()
+
     for angle in angles:
-        dist, point = castrays(player.pos_x, player.pos_y, angle, track_mask, pygame.display.get_surface(), ray_len)
+        dist, point = castrays(player.pos_x, player.pos_y, angle, track_mask, sw, sh, ray_len)
         distances.append(dist)
         hitpoints.append(point)
     return distances, hitpoints
