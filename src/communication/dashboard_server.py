@@ -1,7 +1,6 @@
 import os
 import sys
 import shutil
-<<<<<<< HEAD
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 import sys
 
@@ -10,7 +9,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import serversocket
 import engine.config as config
-=======
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
