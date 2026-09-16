@@ -16,7 +16,7 @@ Creating a new circuit for the AI to train on is straightforward. The system rel
 
 *   Create a new folder for your map inside `src/` (e.g., `src/map1/`).
 *   Draw your track and save it as `map.png` with an exact resolution of **1080x720**.
-*   **Crucial Rule:** The drivable road surface **MUST be completely transparent**. The engine's raycasting and collision systems treat any non-transparent pixel as a solid wall.
+<p style="color">**Crucial Rule:** The drivable road surface **MUST be completely transparent**. The engine's raycasting and collision systems treat any non-transparent pixel as a solid wall.
 
 ---
 

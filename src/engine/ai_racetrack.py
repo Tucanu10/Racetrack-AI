@@ -25,7 +25,7 @@ running = True
 dt = 0
 debug_font = pygame.font.SysFont(None, 28)
 show_debug = False
-POP_SIZE = 200
+POP_SIZE = 300
 epoch = 1
 RESET_SIGNAL = "web/reset.signal"
 
@@ -37,7 +37,7 @@ img_worst = pygame.transform.scale(pygame.image.load("images/car_worst.png").con
 track_map = game.Track(MAP_IMAGE_PATH)
 ai = serversocket.AICLient(host='localhost', port=config.COMMUNICATION_PORT)
 
-# Fetch custom start pos if defined in checkpoints.py, otherwise default to (83, 325)
+# Fetch custom start pos if defined in checkpoints.py, otherwise default to (0, 0)
 START_X, START_Y = getattr(checkpoints, 'START_POS', (0, 0))
 
 def spawn_population(size):
@@ -54,6 +54,10 @@ cars = spawn_population(POP_SIZE)
 
 if 'prev_steppings' not in globals():
     prev_steppings = {}
+
+# Track session statistics accurately
+best_lap_time = float('inf')
+total_run_time = 0.0
 
 while running:
     for event in pygame.event.get():
@@ -73,6 +77,8 @@ while running:
                 ai.send_command("RESET")
                 cars = spawn_population(POP_SIZE)
                 epoch = 1
+                best_lap_time = float('inf')
+                total_run_time = 0.0
                 continue
 
     # Check for web-dashboard-triggered reset
@@ -84,6 +90,8 @@ while running:
         epoch = 1
         cars = spawn_population(POP_SIZE)
         prev_steppings.clear()
+        best_lap_time = float('inf')
+        total_run_time = 0.0
 
     screen.fill((48, 51, 53))
     screen.blit(track_map.image, (0, 0))
@@ -117,7 +125,18 @@ while running:
             "inputs": [0]*9,
             "hidden": [],
             "outputs": [0, 0],
-            "stats": {"epoch": epoch, "time": 0.0, "checkpoint": 0, "laps": 0, "alive_cars": POP_SIZE, "pop_size": POP_SIZE},
+            "stats": {
+            "run_time": round(total_run_time, 2),
+            "epoch": epoch,
+            "time": 0.0,
+            "best_lap": round(best_lap_time, 2) if best_lap_time != float('inf') else "–",
+            "fitness": 0.0,
+            "checkpoint": 0,
+            "total_checkpoints": len(checkpoints.checkpoints),
+            "laps": 0,
+            "alive_cars": POP_SIZE,
+            "pop_size": POP_SIZE
+        },
             "pos": {"x": START_X, "y": START_Y, "angle": 0},
             "others": []
         }
@@ -182,17 +201,20 @@ while running:
             
             if laps > 0:
                 car.laps += int(laps)
+                if car.current_lap_time < best_lap_time:
+                    best_lap_time = car.current_lap_time
                 car.current_lap_time = 0.0
 
             target_rect = checkpoints.checkpoints[car.current_checkpoint]
             target_center = (target_rect.centerx, target_rect.centery)
             dist_to_target = math.hypot(car.pos_x - target_center[0], car.pos_y - target_center[1])
 
-            car.fitness = (car.current_checkpoint * 300) + (car.laps * 3000) - (dist_to_target * 0.05) - (car.current_lap_time * 2) - (steering_jitter * 15)
+            car.fitness = (car.current_checkpoint * 300) + (car.laps * 3000) - (dist_to_target * 0.1) - (car.current_lap_time * 4) - (steering_jitter * 20)
             if th < 0.2:
                 car.fitness -= dt * 20
 
             if crashed or car.time_since_last_checkpoint > 4.0:
+                car.fitness -= 10000
                 car.alive = False
 
             # Update the web dashboard ONLY for the true lead car
@@ -223,9 +245,13 @@ while running:
                     "hidden": hidden,  
                     "outputs": [st, th],
                     "stats": {
+                        "run_time": round(total_run_time, 2),
                         "epoch": epoch,
                         "time": round(car.current_lap_time, 2),
+                        "best_lap": round(best_lap_time, 2) if best_lap_time != float('inf') else "–",
+                        "fitness": round(car.fitness, 2),
                         "checkpoint": car.current_checkpoint,
+                        "total_checkpoints": len(checkpoints.checkpoints),
                         "laps": car.laps,
                         "alive_cars": len(active_indices),
                         "pop_size": POP_SIZE
@@ -269,7 +295,10 @@ while running:
             pygame.draw.rect(screen, (0, 255, 0), checkpoint, 2) 
 
     pygame.display.flip()
-    dt = clock.tick(100) / 1000 
+    
+    raw_dt = clock.tick(60) / 1000
+    dt = raw_dt * config.SIMULATION_SPEED
+    total_run_time += dt
 
 ai.close()
 pygame.quit()

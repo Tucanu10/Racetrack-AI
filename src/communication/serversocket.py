@@ -1,13 +1,14 @@
 import socket
 import threading
 import time
+import atexit
 
 import engine.config as config
 
 class AICLient:
-    def __init__(self, host='localhost', port=config.COMMUNICATION_PORT, retry_interval=1.0):
-        
+    def __init__(self, host='localhost', port=config.COMMUNICATION_PORT, retry_interval=1.0, max_retries=-1):
         self.sock = None
+        attempts = 0
         while self.sock is None:
             candidate = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
@@ -17,7 +18,14 @@ class AICLient:
                 candidate.close()
                 print(f"Waiting for Java server at {host}:{port}...")
                 time.sleep(retry_interval)
+                attempts += 1
+                # Break the loop if we hit the limit
+                if max_retries != -1 and attempts >= max_retries:
+                    raise ConnectionError(f"Could not connect after {max_retries} attempts.")
         self._lock = threading.Lock()
+
+        # Register automatic cleanup on crash/exit
+        atexit.register(self.close)
 
     def _recv_until_newline(self):
         response = ""
@@ -43,8 +51,6 @@ class AICLient:
             st = parts[0]
             th = parts[1]
 
-            # parts[2] is the number of hidden layers, then each layer is
-            # prefixed with its own size: [size0, v0_0, v0_1, ..., size1, ...]
             hidden_layers = []
             cursor = 3
             num_layers = int(parts[2]) if len(parts) > 2 else 0
@@ -70,4 +76,17 @@ class AICLient:
             return self._recv_until_newline()
 
     def close(self):
-        self.sock.close()
+        if self.sock:
+            try:
+                self.sock.close()
+                print("AI socket closed cleanly.")
+            except Exception:
+                pass
+            finally:
+                self.sock = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()

@@ -1,10 +1,10 @@
 import os
-import sys
 import shutil
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+import sys
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-
-from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 import serversocket
 import engine.config as config
@@ -23,7 +23,7 @@ def get_ai():
     global ai
     if ai is None:
         try:
-            ai = serversocket.AICLient(host="localhost", port=config.COMMUNICATION_PORT)
+            ai = serversocket.AICLient(host="localhost", port=config.COMMUNICATION_PORT, max_retries=3)
         except Exception as e:
             print(f"Could not connect to AI server: {e}")
     return ai
@@ -65,7 +65,18 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_response(500)
         self.end_headers()
 
+class DaemonHTTPServer(ThreadingHTTPServer):
+    daemon_threads = True
+    allow_reuse_address = True
 
 if __name__ == "__main__":
     print("Dashboard server listening on http://localhost:" + str(config.DASH_PORT))
-    HTTPServer(("localhost", config.DASH_PORT), DashboardHandler).serve_forever()
+    
+    # 4. Use the new DaemonHTTPServer instead of HTTPServer
+    httpd = DaemonHTTPServer(("", config.DASH_PORT), DashboardHandler)
+    try:
+        httpd.serve_forever()
+    except (KeyboardInterrupt, Exception) as e:
+        print(f"Shutting down dashboard server due to: {e}")
+        httpd.server_close()
+        sys.exit(0)

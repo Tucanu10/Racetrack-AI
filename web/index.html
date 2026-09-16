@@ -22,6 +22,11 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html, body {
+        height: 100vh;
+        overflow: hidden;
+    }
+
     body {
         background:
             linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px) 0 0 / 100% 32px,
@@ -29,31 +34,34 @@
             var(--bg);
         color: var(--text-main);
         font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
-        padding: 24px 24px 48px;
-        min-height: 100vh;
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
     }
 
     .mono { font-family: 'IBM Plex Mono', monospace; }
 
     header {
-        max-width: 1240px;
-        margin: 0 auto 20px;
+        max-width: 1800px;
+        width: 100%;
+        margin: 0 auto 12px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
         gap: 10px;
         border-bottom: 1px solid var(--panel-border);
-        padding-bottom: 14px;
+        padding-bottom: 10px;
+        flex-shrink: 0;
     }
 
     header h1 {
-        font-size: 19px;
+        font-size: 18px;
         font-weight: 700;
         letter-spacing: 0.2px;
     }
     header h1 .hi   { color: var(--accent); }
-    header h1 .sub  { color: var(--text-muted); font-weight: 500; font-size: 14px; margin-left: 6px; }
+    header h1 .sub  { color: var(--text-muted); font-weight: 500; font-size: 13px; margin-left: 6px; }
 
     #status {
         display: flex;
@@ -80,37 +88,47 @@
         100% { box-shadow: 0 0 0 0   rgba(74,222,128,0);   }
     }
 
-    .wrap { max-width: 80%px; margin: 0 auto; }
+    .wrap {
+        max-width: 1800px;
+        width: 100%;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        min-height: 0;
+    }
 
     #gauges {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
         gap: 8px;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
+        flex-shrink: 0;
     }
 
     .gauge {
         background: var(--panel);
         border: 1px solid var(--panel-border);
         border-radius: 10px;
-        padding: 14px 16px;
+        padding: 10px 14px;
     }
 
     .gauge .value {
         font-family: 'IBM Plex Mono', monospace;
-        font-size: 26px;
+        font-size: 22px;
         font-weight: 600;
         color: var(--accent);
         line-height: 1.1;
     }
-    .gauge .value .unit { font-size: 13px; color: var(--text-muted); margin-left: 3px; }
-    .gauge .label { margin-top: 5px; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .gauge .value .unit { font-size: 12px; color: var(--text-muted); margin-left: 3px; }
+    .gauge .label { margin-top: 3px; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
     .panels {
         display: flex;
         gap: 14px;
         align-items: stretch;
-        flex-wrap: wrap;
+        flex-grow: 1;
+        min-height: 0;
     }
 
     .panel {
@@ -118,18 +136,20 @@
         border: 1px solid var(--panel-border);
         border-radius: 10px;
         overflow: hidden;
-        flex: 1 1 460px;
+        flex: 1 1 520px;
         display: flex;
         flex-direction: column;
+        min-height: 0;
     }
 
     .panel-head {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 11px 14px;
+        padding: 10px 14px;
         border-bottom: 1px solid var(--panel-border);
         gap: 10px;
+        flex-shrink: 0;
     }
     .panel-head h2 { font-size: 12px; font-weight: 600; color: var(--text-main); white-space: nowrap; }
 
@@ -144,28 +164,42 @@
     }
 
     .panel-body {
-        padding: 5px;
+        padding: 8px;
         display: flex;
         justify-content: center;
+        align-items: center;
         flex-grow: 1;
+        min-height: 0;
+        overflow: hidden;
     }
 
     .map-body {
         flex-direction: column;
-        align-items: center;
         justify-content: space-between;
-        gap: 10px;
+        gap: 8px;
     }
 
-    canvas { display: block; max-width: 100%; height: auto; }
+    #networkCanvas {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain;
+    }
 
-    .controls { display: flex; gap: 7px; flex-wrap: wrap; }
+    #mapCanvas {
+        max-width: 100%;
+        flex-grow: 1;
+        min-height: 0;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+
+    .controls { display: flex; gap: 6px; flex-wrap: wrap; }
 
     .btn {
         background: transparent;
         color: var(--text-muted);
         border: 1px solid var(--panel-border);
-        padding: 4px 11px;
+        padding: 3px 10px;
         border-radius: 6px;
         cursor: pointer;
         font-family: 'IBM Plex Mono', monospace;
@@ -184,17 +218,68 @@
         background: rgba(255,93,93,0.12);
     }
 
+    .bottom-panel {
+        display: flex;
+        gap: 10px;
+        width: 100%;
+        flex-shrink: 0;
+        flex-grow: 1;
+        max-height: 180px;
+        min-height: 110px;
+    }
+
+    .log-container, .stats-container {
+        flex: 1;
+        background: var(--bg);
+        border: 1px solid var(--panel-border);
+        border-radius: 8px;
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .sub-heading {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+        border-bottom: 1px solid var(--panel-border);
+        padding-bottom: 2px;
+        flex-shrink: 0;
+    }
+
     #action-log {
         width: 100%;
         font-family: 'IBM Plex Mono', monospace;
         font-size: 11px;
         color: var(--text-muted);
-        line-height: 1.7;
-        height: 108px;
+        line-height: 1.5;
+        flex-grow: 1;
         overflow-y: auto;
-        background: var(--bg);
-        padding: 8px 10px;
-        margin-top: auto;
+        background: transparent;
+        padding: 0;
+        margin-top: 0;
+        border: none;
+    }
+
+    .stats-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        flex-grow: 1;
+    }
+
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    .stat-row span.mono {
+        color: var(--accent);
     }
 
     #action-log::-webkit-scrollbar            { width: 5px; }
@@ -225,8 +310,8 @@
             <div class="label">Generation</div>
         </div>
         <div class="gauge">
-            <div class="value mono" id="ui-time">–<span class="unit">s</span></div>
-            <div class="label">Lap time</div>
+            <div class="value mono" id="runtime">–<span class="unit">s</span></div>
+            <div class="label">Simulation time</div>
         </div>
         <div class="gauge">
             <div class="value mono" id="ui-check">–</div>
@@ -265,8 +350,23 @@
                 </div>
             </div>
             <div class="panel-body map-body">
-                <canvas id="mapCanvas" width="1080" height="720" style="width:100%; max-width:640px; border-radius: 10px;"></canvas>
-                <div id="action-log"></div>
+                <canvas id="mapCanvas" width="1080" height="720"></canvas>
+                
+                <div class="bottom-panel">
+                    <div class="log-container">
+                        <div class="sub-heading">System Log</div>
+                        <div id="action-log"></div>
+                    </div>
+                    <div class="stats-container">
+                        <div class="sub-heading">Leader Telemetry</div>
+                        <div class="stats-content">
+                            <div class="stat-row"><span>Fitness:</span> <span id="stat-fitness" class="mono">0.00</span></div>
+                            <div class="stat-row"><span>Current Lap:</span> <span id="stat-lap-time" class="mono">0.00s</span></div>
+                            <div class="stat-row"><span>Best Lap:</span> <span id="stat-best-lap" class="mono">–</span></div>
+                            <div class="stat-row"><span>Checkpoint:</span> <span id="stat-cp" class="mono">0</span></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -283,7 +383,7 @@
     const carBestImg = new Image(); carBestImg.src = 'assets/car_best.png';
     const carWorstImg = new Image(); carWorstImg.src = 'assets/car_worst.png';
 
-    let showAllCars = false;
+    let showAllCars = true;
     function toggleCars() {
         showAllCars = !showAllCars;
         document.getElementById('toggle-cars-btn').textContent = showAllCars ? 'Hide Cars' : 'Show Cars';
@@ -319,7 +419,7 @@
         log.scrollTop = log.scrollHeight;
     }
 
-    let showRays = true;
+    let showRays = false;
 
     function toggleRays() {
         showRays = !showRays;
@@ -355,13 +455,12 @@
             mapCtx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
         }
 
-        // Draw the rest of the pack FIRST so the lead car renders on top
         if (showAllCars && others) {
             others.forEach(c => {
                 mapCtx.save();
                 mapCtx.translate(c.x, c.y);
                 mapCtx.rotate(-c.angle * Math.PI / 180);
-                mapCtx.globalAlpha = 0.55; // Slightly transparent to avoid visual clutter
+                mapCtx.globalAlpha = 0.55;
 
                 const img = c.is_worst ? carWorstImg : carImg;
                 if (img.complete && img.naturalWidth !== 0) {
@@ -380,7 +479,6 @@
         mapCtx.translate(pos.x, pos.y);
         mapCtx.rotate(-pos.angle * Math.PI / 180);
 
-        // Draw raycasts
         if (showRays && inputs) {
             const rayOffsets = [-45, -30, -15, 0, 15, 30, 45];
             mapCtx.lineWidth = 1.5;
@@ -404,7 +502,6 @@
             });
         }
 
-        // Draw Lead Car (Gold)
         if (carBestImg.complete && carBestImg.naturalWidth !== 0) {
             mapCtx.drawImage(carBestImg, -20, -20, 40, 40);
         } else {
@@ -415,10 +512,11 @@
         mapCtx.restore();
     }
 
-    function drawNetwork(layers) {
+    function drawNetwork(inputs, hidden, outputs) {
         netCtx.clearRect(0, 0, netCanvas.width, netCanvas.height);
-
-        const hasLargeLayer = layers.some(l => l.length > 8);
+        
+        const layers = [inputs, ...(hidden || []), outputs];
+        const hasLargeLayer = layers.some(l => l && l.length > 8);
         const nodeR    = hasLargeLayer ? 10 : 14;
         const padX     = 10;
         const xSpacing = (netCanvas.width - padX * 30) / Math.max(1, layers.length - 1);
@@ -429,10 +527,11 @@
         const lastCol      = layers.length - 1;
 
         const nodePos = layers.map((layer, col) => {
+            const safeLayer = layer || [];
             const x = startX + col * xSpacing;
-            const ySpacing = Math.min(68, (netCanvas.height - 40) / (layer.length + 1));
-            const startY   = (netCanvas.height - (layer.length - 1) * ySpacing) / 2;
-            return layer.map((val, row) => ({ x, y: startY + row * ySpacing, val, col, row }));
+            const ySpacing = Math.min(68, (netCanvas.height - 40) / (safeLayer.length + 1));
+            const startY   = (netCanvas.height - (safeLayer.length - 1) * ySpacing) / 2;
+            return safeLayer.map((val, row) => ({ x, y: startY + row * ySpacing, val, col, row }));
         });
 
         netCtx.lineWidth = 1.5;
@@ -449,18 +548,18 @@
             }
         }
 
-        netCtx.font          = "11px 'IBM Plex Mono', monospace";
-        netCtx.textBaseline  = 'middle';
+        netCtx.font           = "11px 'IBM Plex Mono', monospace";
+        netCtx.textBaseline   = 'middle';
 
-        for (const col of nodePos) {
-            for (const n of col) {
+        nodePos.forEach((col, cIdx) => {
+            col.forEach(n => {
                 const intensity = Math.max(0, Math.min(1, n.val));
 
                 netCtx.beginPath();
                 netCtx.arc(n.x, n.y, nodeR, 0, Math.PI * 2);
-                netCtx.fillStyle   = `rgba(74,222,128,${0.12 + intensity * 0.78})`;
+                netCtx.fillStyle    = `rgba(74,222,128,${0.12 + intensity * 0.78})`;
                 netCtx.fill();
-                netCtx.lineWidth   = 1.5;
+                netCtx.lineWidth    = 1.5;
                 netCtx.strokeStyle = intensity > 0.5 ? '#4ade80' : '#243040';
                 netCtx.stroke();
 
@@ -479,8 +578,8 @@
                     netCtx.fillStyle  = 'rgba(232,237,242,0.6)';
                     netCtx.fillText(n.val.toFixed(2), n.x, n.y - nodeR - 6);
                 }
-            }
-        }
+            });
+        });
     }
 
     async function updateDashboard() {
@@ -490,7 +589,6 @@
             const data  = await res.json();
             const stats = data.stats;
 
-            // First frame — initialise tracking
             if (lastEpoch === -1) {
                 lastEpoch      = stats.epoch;
                 lastLaps       = stats.laps;
@@ -498,7 +596,6 @@
                 lastCheckpoint = stats.checkpoint;
             }
 
-            // Epoch rolled back (keyboard-triggered or web-triggered reset)
             if (stats.epoch < lastEpoch) {
                 addLog(`Reset detected — starting Generation ${stats.epoch}.`, 'warn');
                 lastEpoch      = stats.epoch;
@@ -507,7 +604,6 @@
                 lastTime       = 0;
             }
 
-            // New generation started
             if (stats.epoch > lastEpoch) {
                 addLog(`Gen ${lastEpoch} ended → Gen ${stats.epoch} starting.`, 'err');
                 lastEpoch      = stats.epoch;
@@ -516,7 +612,6 @@
                 lastTime       = 0;
             }
 
-            // Lap completed
             if (stats.laps > lastLaps) {
                 addLog(`Lap ${stats.laps} completed! Time: ${lastTime.toFixed(2)}s`, 'ok');
                 lastLaps = stats.laps;
@@ -525,23 +620,31 @@
             lastTime       = stats.time;
             lastCheckpoint = stats.checkpoint;
 
-            // Update gauges
+            if (stats.run_time !== undefined) {
+                document.getElementById('runtime').innerHTML = stats.run_time.toFixed(2) + '<span class="unit">s</span>';
+            }
             document.getElementById('ui-epoch').textContent = stats.epoch;
-            document.getElementById('ui-time').innerHTML    = stats.time.toFixed(2) + '<span class="unit">s</span>';
             document.getElementById('ui-check').textContent = stats.checkpoint;
             document.getElementById('ui-laps').textContent  = stats.laps;
+            document.getElementById('stat-fitness').textContent = stats.fitness !== undefined ? stats.fitness.toFixed(2) : '0.00';
+            document.getElementById('stat-lap-time').textContent = stats.time.toFixed(2) + 's';
+            document.getElementById('stat-best-lap').textContent = stats.best_lap !== '–' ? stats.best_lap + 's' : '–';
+            document.getElementById('stat-cp').textContent = `${stats.checkpoint} / ${stats.total_checkpoints ?? '–'}`;
+            
             const pop = stats.pop_size ?? '–';
             const alive = stats.alive_cars ?? '–';
             document.getElementById('ui-alive').innerHTML   = `${alive}<span class="unit">/${pop}</span>`;
 
-            // Visualisations
-            drawNetwork([data.inputs, ...data.hidden, data.outputs]);
+            drawNetwork(data.inputs || [], data.hidden || [], data.outputs || []);
+            
+            const hiddenLengths = (data.hidden || []).map(l => l.length);
             document.getElementById('net-shape').textContent =
-                [data.inputs.length, ...data.hidden.map(l => l.length), data.outputs.length].join(' → ');
+                [(data.inputs || []).length, ...hiddenLengths, (data.outputs || []).length].join(' → ');
+                
             drawMapAndCar(data.pos, data.inputs, data.others);
 
             setStatus(true);
-        } catch {
+        } catch (e) {
             setStatus(false);
         }
 

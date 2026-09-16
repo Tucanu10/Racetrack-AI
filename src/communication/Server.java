@@ -13,8 +13,9 @@ import ai.Network;
 import engine.Config;
 
 public class Server {
-    private static final int POPULATION_SIZE = 200;
-    private static final int ELITE_COUNT = 20;
+    private static final int POPULATION_SIZE = 300;
+    private static final int ELITE_COUNT = POPULATION_SIZE / 10;
+    private static final float MUTATION_RATE = Config.MUTATION_RATE;
 
     private static final Object POPULATION_LOCK = new Object();
     private static List<Network> population = new ArrayList<>();
@@ -75,7 +76,6 @@ public class Server {
                         Network loaded = Network.load("champion.dat");
                         for (int i = 0; i < POPULATION_SIZE; i++) {
                             population.set(i, new Network(loaded));
-                            if (i > 0) population.get(i).mutate(0.25); // Mutate clones to keep variation
                         }
                     }
                     System.out.println("Loaded champion to population.");
@@ -88,7 +88,8 @@ public class Server {
                         population.clear();
                         for (int i = 0; i < POPULATION_SIZE; i++) {
                             population.add(new Network(2, 10)); // 2 hidden layers, 10 neurons each
-                            
+                            if(i < POPULATION_SIZE / 5)
+                            population.get(i).mutate(MUTATION_RATE); // Mutate all but the first
                         }
                     }
                     System.out.println("Population reset.");
