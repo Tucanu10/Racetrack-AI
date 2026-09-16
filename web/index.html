@@ -7,54 +7,53 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
     :root {
-        --bg: #0b0f14;
-        --panel: #10161d;
-        --panel-border: #212a34;
-        --accent: #4ade80;
-        --accent-soft: rgba(74, 222, 128, 0.40);
-        --secondary: #48cae4;
-        --text-main: #e8edf2;
-        --text-muted: #62707d;
-        --good: #4ade80;
-        --bad: #ff5d5d;
+        --bg:           #0b0f14;
+        --panel:        #10161d;
+        --panel-border: #1e2830;
+        --accent:       #4ade80;
+        --accent-soft:  rgba(74,222,128,0.15);
+        --secondary:    #48cae4;
+        --text-main:    #e8edf2;
+        --text-muted:   #62707d;
+        --good:         #4ade80;
+        --bad:          #ff5d5d;
+        --warn:         #f5a623;
     }
 
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
         background:
-            linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px) 0 0 / 100% 32px,
-            linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px) 0 0 / 32px 100%,
+            linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px) 0 0 / 100% 32px,
+            linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px) 0 0 / 32px 100%,
             var(--bg);
         color: var(--text-main);
         font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
-        margin: 0;
-        padding: 28px 24px 40px;
+        padding: 24px 24px 48px;
         min-height: 100vh;
     }
 
     .mono { font-family: 'IBM Plex Mono', monospace; }
 
     header {
-        max-width: 1180px;
-        margin: 0 auto 22px;
+        max-width: 1240px;
+        margin: 0 auto 20px;
         display: flex;
-        align-items: baseline;
+        align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
         gap: 10px;
         border-bottom: 1px solid var(--panel-border);
-        padding-bottom: 16px;
+        padding-bottom: 14px;
     }
 
     header h1 {
-        font-size: 20px;
+        font-size: 19px;
         font-weight: 700;
-        margin: 0;
         letter-spacing: 0.2px;
     }
-
-    header h1 span { color: var(--accent); }
+    header h1 .hi   { color: var(--accent); }
+    header h1 .sub  { color: var(--text-muted); font-weight: 500; font-size: 14px; margin-left: 6px; }
 
     #status {
         display: flex;
@@ -66,66 +65,50 @@
     }
 
     #status-dot {
-        width: 8px;
-        height: 8px;
+        width: 8px; height: 8px;
         border-radius: 50%;
         background: var(--text-muted);
-        transition: background 0.3s ease;
+        transition: background 0.3s;
+        flex-shrink: 0;
     }
-
-    #status-dot.live {
-        background: var(--good);
-        box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
-        animation: pulse 1.8s infinite;
-    }
-
+    #status-dot.live { background: var(--good); animation: pulse 1.8s infinite; }
     #status-dot.lost { background: var(--bad); }
 
     @keyframes pulse {
-        0%   { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.45); }
-        70%  { box-shadow: 0 0 0 7px rgba(74, 222, 128, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+        0%   { box-shadow: 0 0 0 0   rgba(74,222,128,0.5); }
+        70%  { box-shadow: 0 0 0 7px rgba(74,222,128,0);   }
+        100% { box-shadow: 0 0 0 0   rgba(74,222,128,0);   }
     }
 
-    .wrap { max-width: min(1280px, 94vw); margin: 0 auto; }
+    .wrap { max-width: 80%px; margin: 0 auto; }
 
     #gauges {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        gap: 7px;
-        margin-bottom: 20px;
+        gap: 8px;
+        margin-bottom: 16px;
     }
 
     .gauge {
         background: var(--panel);
         border: 1px solid var(--panel-border);
         border-radius: 10px;
-        padding: 16px 18px;
+        padding: 14px 16px;
     }
 
     .gauge .value {
         font-family: 'IBM Plex Mono', monospace;
-        font-size: 28px;
+        font-size: 26px;
         font-weight: 600;
         color: var(--accent);
         line-height: 1.1;
     }
-
-    .gauge .value .unit {
-        font-size: 14px;
-        color: var(--text-muted);
-        margin-left: 4px;
-    }
-
-    .gauge .label {
-        margin-top: 6px;
-        font-size: 12px;
-        color: var(--text-muted);
-    }
+    .gauge .value .unit { font-size: 13px; color: var(--text-muted); margin-left: 3px; }
+    .gauge .label { margin-top: 5px; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
     .panels {
         display: flex;
-        gap: 16px;
+        gap: 14px;
         align-items: stretch;
         flex-wrap: wrap;
     }
@@ -144,24 +127,20 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 16px;
+        padding: 11px 14px;
         border-bottom: 1px solid var(--panel-border);
+        gap: 10px;
     }
+    .panel-head h2 { font-size: 12px; font-weight: 600; color: var(--text-main); white-space: nowrap; }
 
-    .panel-head h2 {
-        font-size: 13px;
-        font-weight: 600;
-        margin: 0;
-        color: var(--text-main);
-    }
-
-    .panel-head .tag {
+    .tag {
         font-family: 'IBM Plex Mono', monospace;
         font-size: 11px;
         color: var(--secondary);
-        background: rgba(72, 202, 228, 0.12);
+        background: rgba(72,202,228,0.10);
         padding: 3px 8px;
         border-radius: 20px;
+        white-space: nowrap;
     }
 
     .panel-body {
@@ -175,337 +154,401 @@
         flex-direction: column;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: 10px;
     }
-
-    #action-log {
-        width: 100%;
-        max-width: 640px;
-        font-size: 11px;
-        color: var(--text-muted);
-        line-height: 1.6;
-        max-height: 85px;
-        overflow-y: auto;
-        border-top: 1px solid var(--panel-border);
-        padding: 8px 4px 4px 4px;
-        margin-top: auto;
-    }
-
-    #action-log::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    #action-log::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, 0.15);
-        border-radius: 4px;
-    }
-
-    #action-log::-webkit-scrollbar-thumb {
-        background: var(--panel-border);
-        border-radius: 4px;
-    }
-
-    #action-log::-webkit-scrollbar-thumb:hover {
-        background: var(--text-muted);
-    }
-
-    #action-log .entry {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    #action-log .entry.ok { color: var(--good); }
-    #action-log .entry.err { color: var(--bad); }
 
     canvas { display: block; max-width: 100%; height: auto; }
 
-    .controls { display: flex; gap: 8px; }
+    .controls { display: flex; gap: 7px; flex-wrap: wrap; }
 
     .btn {
         background: transparent;
         color: var(--text-muted);
         border: 1px solid var(--panel-border);
-        padding: 5px 12px;
+        padding: 4px 11px;
         border-radius: 6px;
         cursor: pointer;
         font-family: 'IBM Plex Mono', monospace;
         font-size: 11px;
-        transition: all 0.15s ease;
+        transition: color 0.15s, border-color 0.15s, background 0.15s;
+        white-space: nowrap;
     }
-
     .btn:hover {
         color: var(--accent);
         border-color: var(--accent);
         background: var(--accent-soft);
     }
-
-    @media (max-width: 900px) {
-        #gauges { grid-template-columns: repeat(3, 1fr); }
+    .btn.danger:hover {
+        color: var(--bad);
+        border-color: var(--bad);
+        background: rgba(255,93,93,0.12);
     }
 
-    @media (max-width: 520px) {
-        #gauges { grid-template-columns: repeat(2, 1fr); }
+    #action-log {
+        width: 100%;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: var(--text-muted);
+        line-height: 1.7;
+        height: 108px;
+        overflow-y: auto;
+        background: var(--bg);
+        padding: 8px 10px;
+        margin-top: auto;
     }
+
+    #action-log::-webkit-scrollbar            { width: 5px; }
+    #action-log::-webkit-scrollbar-track      { background: transparent; }
+    #action-log::-webkit-scrollbar-thumb      { background: var(--panel-border); border-radius: 10px; }
+    #action-log::-webkit-scrollbar-thumb:hover{ background: var(--text-muted); }
+
+    #action-log .entry              { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #action-log .entry.ok           { color: var(--good); }
+    #action-log .entry.err          { color: var(--bad);  }
+    #action-log .entry.warn         { color: var(--warn); }
+
+    @media (max-width: 900px) { #gauges { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 520px) { #gauges { grid-template-columns: repeat(2, 1fr); } }
 </style>
 </head>
 <body>
-    <header>
-        <h1>Racetrack<span>AI</span> <span style="color:var(--text-muted); font-weight:500;">/ Self Learning Neural Network</span></h1>
-        <div id="status"><span id="status-dot"></span><span id="status-text">connecting…</span></div>
-    </header>
 
-    <div class="wrap">
-        <div id="gauges">
-            <div class="gauge">
-                <div class="value mono" id="ui-epoch">–</div>
-                <div class="label">Generation</div>
-            </div>
-            <div class="gauge">
-                <div class="value mono" id="ui-time">–<span class="unit">s</span></div>
-                <div class="label">Lap time</div>
-            </div>
-            <div class="gauge">
-                <div class="value mono" id="ui-check">–</div>
-                <div class="label">Checkpoint</div>
-            </div>
-            <div class="gauge">
-                <div class="value mono" id="ui-laps">–</div>
-                <div class="label">Laps</div>
-            </div>
-            <div class="gauge">
-                <div class="value mono" id="ui-alive">–<span class="unit">/–</span></div>
-                <div class="label">Alive cars</div>
-            </div>
+<header>
+    <h1>Racetrack<span class="hi">AI</span><span class="sub">/ Self-Learning Neural Network</span></h1>
+    <div id="status"><span id="status-dot"></span><span id="status-text">connecting…</span></div>
+</header>
+
+<div class="wrap">
+    <div id="gauges">
+        <div class="gauge">
+            <div class="value mono" id="ui-epoch">–</div>
+            <div class="label">Generation</div>
         </div>
-
-        <div class="panels">
-            <div class="panel">
-                <div class="panel-head">
-                    <h2>Neural activity — lead car</h2>
-                    <span class="tag" id="net-shape">–</span>
-                </div>
-                <div class="panel-body">
-                    <canvas id="networkCanvas" width="640" height="560"></canvas>
-                </div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-head">
-                    <h2>Track position</h2>
-                    <div class="controls">
-                        <button class="btn" onclick="sendAction('/save', 'Save Champion requested')">Save champion</button>
-                        <button class="btn" onclick="sendAction('/load', 'Load Champion requested')">Load champion</button>
-                        <button class="btn" onclick="sendAction('/reset', 'Reset requested')">Reset</button>
-                    </div>
-                </div>
-                <div class="panel-body map-body">
-                    <canvas id="mapCanvas" width="1080" height="720" style="width:100%; max-width:640px;"></canvas>
-                    <div id="action-log"></div>
-                </div>
-            </div>
+        <div class="gauge">
+            <div class="value mono" id="ui-time">–<span class="unit">s</span></div>
+            <div class="label">Lap time</div>
+        </div>
+        <div class="gauge">
+            <div class="value mono" id="ui-check">–</div>
+            <div class="label">Checkpoint</div>
+        </div>
+        <div class="gauge">
+            <div class="value mono" id="ui-laps">–</div>
+            <div class="label">Laps</div>
+        </div>
+        <div class="gauge">
+            <div class="value mono" id="ui-alive">–<span class="unit">/–</span></div>
+            <div class="label">Alive cars</div>
         </div>
     </div>
 
-    <script>
-        const netCanvas = document.getElementById('networkCanvas');
-        const netCtx = netCanvas.getContext('2d');
+    <div class="panels">
+        <div class="panel">
+            <div class="panel-head">
+                <h2>Neural activity — lead car</h2>
+                <span class="tag" id="net-shape">–</span>
+            </div>
+            <div class="panel-body">
+                <canvas id="networkCanvas" width="640" height="560"></canvas>
+            </div>
+        </div>
 
-        const mapCanvas = document.getElementById('mapCanvas');
-        const mapCtx = mapCanvas.getContext('2d');
+        <div class="panel">
+            <div class="panel-head">
+                <h2>Track position</h2>
+                <div class="controls">
+                    <button class="btn" id="toggle-cars-btn" onclick="toggleCars()">Show Cars</button>
+                    <button class="btn" id="toggle-rays-btn" onclick="toggleRays()">Hide Rays</button>
+                    <button class="btn" onclick="sendCmd('/save', 'Save champion')">Save</button>
+                    <button class="btn" onclick="sendCmd('/load', 'Load champion')">Load</button>
+                    <button class="btn danger" onclick="sendCmd('/reset', 'Reset requested')">Reset</button>
+                </div>
+            </div>
+            <div class="panel-body map-body">
+                <canvas id="mapCanvas" width="1080" height="720" style="width:100%; max-width:640px; border-radius: 10px;"></canvas>
+                <div id="action-log"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        const mapImg = new Image();
-        mapImg.src = 'assets/map.png';
+<script>
+    const netCanvas = document.getElementById('networkCanvas');
+    const netCtx    = netCanvas.getContext('2d');
+    const mapCanvas = document.getElementById('mapCanvas');
+    const mapCtx    = mapCanvas.getContext('2d');
 
-        function drawMapAndCar(pos) {
-            mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+    const mapImg = new Image(); mapImg.src = 'assets/map.png';
+    const carImg = new Image(); carImg.src = 'assets/car.png';
+    const carBestImg = new Image(); carBestImg.src = 'assets/car_best.png';
+    const carWorstImg = new Image(); carWorstImg.src = 'assets/car_worst.png';
 
-            if (mapImg.complete && mapImg.naturalWidth !== 0) {
-                mapCtx.drawImage(mapImg, 0, 0, mapCanvas.width, mapCanvas.height);
+    let showAllCars = false;
+    function toggleCars() {
+        showAllCars = !showAllCars;
+        document.getElementById('toggle-cars-btn').textContent = showAllCars ? 'Hide Cars' : 'Show Cars';
+        addLog(showAllCars ? 'All cars visible' : 'Other cars hidden');
+    }
+
+    let lastEpoch      = -1;
+    let lastLaps       = 0;
+    let lastTime       = 0;
+    let lastCheckpoint = 0;
+
+    function resetTracking() {
+        lastEpoch      = -1;
+        lastLaps       = 0;
+        lastTime       = 0;
+        lastCheckpoint = 0;
+    }
+
+    function setStatus(live) {
+        const dot  = document.getElementById('status-dot');
+        const text = document.getElementById('status-text');
+        dot.className    = live ? 'live' : 'lost';
+        text.textContent = live ? 'live' : 'no signal';
+    }
+
+    function addLog(msg, kind) {
+        const log = document.getElementById('action-log');
+        const time = new Date().toLocaleTimeString();
+        const el = document.createElement('div');
+        el.className = 'entry' + (kind ? ' ' + kind : '');
+        el.textContent = `[${time}] ${msg}`;
+        log.appendChild(el);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    let showRays = true;
+
+    function toggleRays() {
+        showRays = !showRays;
+        document.getElementById('toggle-rays-btn').textContent = showRays ? 'Hide Rays' : 'Show Rays';
+        addLog(showRays ? 'Raycasts visible' : 'Raycasts hidden');
+    }
+
+    async function sendCmd(endpoint, label) {
+        addLog(label + ' requested…');
+        try {
+            const res = await fetch(endpoint);
+            if (res.ok) {
+                addLog(`✓ ${label} acknowledged.`, 'ok');
+                if (endpoint === '/reset') {
+                    resetTracking();
+                    addLog('Generation counter reset to 1.', 'warn');
+                }
             } else {
-                mapCtx.fillStyle = '#161d24';
-                mapCtx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
-                mapCtx.fillStyle = '#62707d';
-                mapCtx.font = "14px 'IBM Plex Mono', monospace";
-                mapCtx.textAlign = 'center';
-                mapCtx.fillText('loading track…', mapCanvas.width / 2, mapCanvas.height / 2);
+                addLog(`✗ Server error ${res.status}`, 'err');
             }
+        } catch (err) {
+            addLog(`✗ Could not reach ${endpoint}`, 'err');
+        }
+    }
 
-            if (pos) {
-                mapCtx.save();
-                mapCtx.translate(pos.x, pos.y);
-                mapCtx.rotate(-pos.angle * Math.PI / 180);
+    function drawMapAndCar(pos, inputs, others) {
+        mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
 
-                mapCtx.fillStyle = '#ff8a3d';
-                mapCtx.fillRect(-10, -20, 20, 40);
-
-                mapCtx.fillStyle = '#e8edf2';
-                mapCtx.fillRect(-10, -20, 20, 10);
-
-                mapCtx.restore();
-            }
+        if (mapImg.complete && mapImg.naturalWidth !== 0) {
+            mapCtx.drawImage(mapImg, 0, 0, mapCanvas.width, mapCanvas.height);
+        } else {
+            mapCtx.fillStyle = '#161d24';
+            mapCtx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
         }
 
-        function drawNetwork(layers) {
-            netCtx.clearRect(0, 0, netCanvas.width, netCanvas.height);
-            const xSpacing = (netCanvas.width - 400) / Math.max(1, layers.length - 1);
-            const startX = 200;
-            const nodeRadius = layers.some(l => l.length > 8) ? 10 : 15;
-            const inputLabels = ["-45°", "-30°", "-15°", "0°", "15°", "30°", "45°", "Speed", "Angle to Checkpoint"];
-            const outputLabels = ["Steering", "Throttle"];
-            const lastCol = layers.length - 1;
-            let nodePositions = [];
+        // Draw the rest of the pack FIRST so the lead car renders on top
+        if (showAllCars && others) {
+            others.forEach(c => {
+                mapCtx.save();
+                mapCtx.translate(c.x, c.y);
+                mapCtx.rotate(-c.angle * Math.PI / 180);
+                mapCtx.globalAlpha = 0.55; // Slightly transparent to avoid visual clutter
 
-            layers.forEach((layer, colIndex) => {
-                const x = startX + (colIndex * xSpacing);
-                const ySpacing = Math.min(70, netCanvas.height / (layer.length + 1));
-                const startY = (netCanvas.height - ((layer.length - 1) * ySpacing)) / 2;
-                let colPositions = [];
-                layer.forEach((val, rowIndex) => {
-                    const y = startY + (rowIndex * ySpacing);
-                    colPositions.push({ x, y, val, colIndex, rowIndex });
-                });
-                nodePositions.push(colPositions);
+                const img = c.is_worst ? carWorstImg : carImg;
+                if (img.complete && img.naturalWidth !== 0) {
+                    mapCtx.drawImage(img, -20, -20, 40, 40);
+                } else {
+                    mapCtx.fillStyle = c.is_worst ? '#ff5d5d' : '#9ab0c0';
+                    mapCtx.fillRect(-10, -20, 20, 40);
+                }
+                mapCtx.restore();
             });
+        }
 
-            netCtx.lineWidth = 2;
-            for (let c = 0; c < nodePositions.length - 1; c++) {
-                for (let n1 of nodePositions[c]) {
-                    for (let n2 of nodePositions[c + 1]) {
-                        const intensity = Math.max(0.08, n1.val);
-                        netCtx.strokeStyle = `rgba(72, 202, 228, ${intensity * 0.45})`;
-                        netCtx.beginPath();
-                        netCtx.moveTo(n1.x, n1.y);
-                        netCtx.lineTo(n2.x, n2.y);
-                        netCtx.stroke();
-                    }
+        if (!pos) return;
+
+        mapCtx.save();
+        mapCtx.translate(pos.x, pos.y);
+        mapCtx.rotate(-pos.angle * Math.PI / 180);
+
+        // Draw raycasts
+        if (showRays && inputs) {
+            const rayOffsets = [-45, -30, -15, 0, 15, 30, 45];
+            mapCtx.lineWidth = 1.5;
+
+            rayOffsets.forEach((offset, i) => {
+                const dist = inputs[i] * 250.0;
+                const rad = offset * Math.PI / 180;
+                const endX = -dist * Math.sin(rad);
+                const endY = -dist * Math.cos(rad);
+
+                mapCtx.strokeStyle = 'rgba(255, 255, 255, 1)';
+                mapCtx.beginPath();
+                mapCtx.moveTo(0, 0);
+                mapCtx.lineTo(endX, endY);
+                mapCtx.stroke();
+
+                mapCtx.fillStyle = 'rgba(74, 222, 128, 0.8)';
+                mapCtx.beginPath();
+                mapCtx.arc(endX, endY, 3, 0, Math.PI * 2);
+                mapCtx.fill();
+            });
+        }
+
+        // Draw Lead Car (Gold)
+        if (carBestImg.complete && carBestImg.naturalWidth !== 0) {
+            mapCtx.drawImage(carBestImg, -20, -20, 40, 40);
+        } else {
+            mapCtx.fillStyle = '#ff8a3d';
+            mapCtx.fillRect(-10, -20, 20, 40);
+        }
+
+        mapCtx.restore();
+    }
+
+    function drawNetwork(layers) {
+        netCtx.clearRect(0, 0, netCanvas.width, netCanvas.height);
+
+        const hasLargeLayer = layers.some(l => l.length > 8);
+        const nodeR    = hasLargeLayer ? 10 : 14;
+        const padX     = 180;
+        const xSpacing = (netCanvas.width - padX * 2) / Math.max(1, layers.length - 1);
+        const startX   = padX;
+
+        const inputLabels  = ['-45°', '-30°', '-15°', '0°', '15°', '30°', '45°', 'Speed', 'Angle to Checkpoint'];
+        const outputLabels = ['Steering', 'Throttle'];
+        const lastCol      = layers.length - 1;
+
+        const nodePos = layers.map((layer, col) => {
+            const x = startX + col * xSpacing;
+            const ySpacing = Math.min(68, (netCanvas.height - 40) / (layer.length + 1));
+            const startY   = (netCanvas.height - (layer.length - 1) * ySpacing) / 2;
+            return layer.map((val, row) => ({ x, y: startY + row * ySpacing, val, col, row }));
+        });
+
+        netCtx.lineWidth = 1.5;
+        for (let c = 0; c < nodePos.length - 1; c++) {
+            for (const n1 of nodePos[c]) {
+                for (const n2 of nodePos[c + 1]) {
+                    const alpha = 0.06 + Math.max(0, n1.val) * 0.38;
+                    netCtx.strokeStyle = `rgba(72,202,228,${alpha})`;
+                    netCtx.beginPath();
+                    netCtx.moveTo(n1.x, n1.y);
+                    netCtx.lineTo(n2.x, n2.y);
+                    netCtx.stroke();
                 }
             }
-
-            nodePositions.forEach(col => {
-                col.forEach(node => {
-                    const intensity = Math.max(0, Math.min(1, node.val));
-                    netCtx.beginPath();
-                    netCtx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI);
-                    netCtx.fillStyle = `rgba(74, 222, 128, ${0.15 + intensity * 0.75})`;
-                    netCtx.fill();
-                    netCtx.lineWidth = 2;
-                    netCtx.strokeStyle = intensity > 0.5 ? "#4ade80" : "#2a3540";
-                    netCtx.stroke();
-
-                    netCtx.fillStyle = "#e8edf2";
-                    netCtx.font = "11px 'IBM Plex Mono', monospace";
-
-                    let label = "";
-                    let align = "center";
-                    if (node.colIndex === 0) { label = inputLabels[node.rowIndex] || ""; align = "right"; }
-                    else if (node.colIndex === lastCol) { label = outputLabels[node.rowIndex] || ""; align = "left"; }
-
-                    netCtx.textBaseline = "middle";
-                    if (align === "right") {
-                        netCtx.textAlign = "right";
-                        netCtx.fillText(`${label}  ${node.val.toFixed(2)}`, node.x - 22, node.y);
-                    } else if (align === "left") {
-                        netCtx.textAlign = "left";
-                        netCtx.fillText(`${node.val.toFixed(2)}  ${label}`, node.x + 22, node.y);
-                    } else {
-                        netCtx.textAlign = "center";
-                        netCtx.fillText(node.val.toFixed(2), node.x, node.y - 22);
-                    }
-                });
-            });
         }
 
-        function setStatus(live) {
-            const dot = document.getElementById('status-dot');
-            const text = document.getElementById('status-text');
-            dot.className = live ? 'live' : 'lost';
-            text.textContent = live ? 'live' : 'no signal';
-        }
+        netCtx.font          = "11px 'IBM Plex Mono', monospace";
+        netCtx.textBaseline  = 'middle';
 
-        let lastLaps = 0;
-    let lastEpoch = -1;
-    let lastTime = 0;
-    let lastCheckpoint = 0;
+        for (const col of nodePos) {
+            for (const n of col) {
+                const intensity = Math.max(0, Math.min(1, n.val));
+
+                netCtx.beginPath();
+                netCtx.arc(n.x, n.y, nodeR, 0, Math.PI * 2);
+                netCtx.fillStyle   = `rgba(74,222,128,${0.12 + intensity * 0.78})`;
+                netCtx.fill();
+                netCtx.lineWidth   = 1.5;
+                netCtx.strokeStyle = intensity > 0.5 ? '#4ade80' : '#243040';
+                netCtx.stroke();
+
+                if (n.col === 0) {
+                    const label = inputLabels[n.row] ?? '';
+                    netCtx.textAlign  = 'right';
+                    netCtx.fillStyle  = '#9ab0c0';
+                    netCtx.fillText(`${label}  ${n.val.toFixed(2)}`, n.x - nodeR - 4, n.y);
+                } else if (n.col === lastCol) {
+                    const label = outputLabels[n.row] ?? '';
+                    netCtx.textAlign  = 'left';
+                    netCtx.fillStyle  = '#9ab0c0';
+                    netCtx.fillText(`${n.val.toFixed(2)}  ${label}`, n.x + nodeR + 4, n.y);
+                } else {
+                    netCtx.textAlign  = 'center';
+                    netCtx.fillStyle  = 'rgba(232,237,242,0.6)';
+                    netCtx.fillText(n.val.toFixed(2), n.x, n.y - nodeR - 6);
+                }
+            }
+        }
+    }
 
     async function updateDashboard() {
         try {
-            const response = await fetch('state.json?' + Date.now());
-            if (!response.ok) throw new Error("File fetch failed");
-            const data = await response.json();
+            const res  = await fetch('state.json?' + Date.now());
+            if (!res.ok) throw new Error('fetch failed');
+            const data  = await res.json();
             const stats = data.stats;
 
+            // First frame — initialise tracking
             if (lastEpoch === -1) {
-                lastEpoch = stats.epoch;
-                lastLaps = stats.laps;
-                lastTime = stats.time;
+                lastEpoch      = stats.epoch;
+                lastLaps       = stats.laps;
+                lastTime       = stats.time;
                 lastCheckpoint = stats.checkpoint;
             }
 
+            // Epoch rolled back (keyboard-triggered or web-triggered reset)
+            if (stats.epoch < lastEpoch) {
+                addLog(`Reset detected — starting Generation ${stats.epoch}.`, 'warn');
+                lastEpoch      = stats.epoch;
+                lastLaps       = 0;
+                lastCheckpoint = 0;
+                lastTime       = 0;
+            }
+
+            // New generation started
+            if (stats.epoch > lastEpoch) {
+                addLog(`Gen ${lastEpoch} ended → Gen ${stats.epoch} starting.`, 'err');
+                lastEpoch      = stats.epoch;
+                lastLaps       = 0;
+                lastCheckpoint = 0;
+                lastTime       = 0;
+            }
+
+            // Lap completed
             if (stats.laps > lastLaps) {
                 addLog(`Lap ${stats.laps} completed! Time: ${lastTime.toFixed(2)}s`, 'ok');
                 lastLaps = stats.laps;
             }
 
-            if (stats.epoch > lastEpoch) {
-                addLog(`Generation ${lastEpoch} finished. Starting Generation ${stats.epoch}.`, 'err');
-                lastEpoch = stats.epoch;
-                lastLaps = 0;
-                lastCheckpoint = 0;
-                lastTime = 0;
-            }
-
-            if (stats.time < lastTime && stats.laps === lastLaps && stats.epoch === lastEpoch) {
-                addLog(`Lead car crashed at checkpoint ${lastCheckpoint}!`, 'err');
-            }
-
-            lastTime = stats.time;
+            lastTime       = stats.time;
             lastCheckpoint = stats.checkpoint;
 
+            // Update gauges
             document.getElementById('ui-epoch').textContent = stats.epoch;
-            document.getElementById('ui-time').innerHTML = stats.time.toFixed(2) + '<span class="unit">s</span>';
+            document.getElementById('ui-time').innerHTML    = stats.time.toFixed(2) + '<span class="unit">s</span>';
             document.getElementById('ui-check').textContent = stats.checkpoint;
-            document.getElementById('ui-laps').textContent = stats.laps;
-            const popSize = stats.pop_size !== undefined ? stats.pop_size : '200';
-            document.getElementById('ui-alive').innerHTML = (stats.alive_cars !== undefined ? stats.alive_cars : '–') + `<span class="unit">/${popSize}</span>`;
+            document.getElementById('ui-laps').textContent  = stats.laps;
+            const pop = stats.pop_size ?? '–';
+            const alive = stats.alive_cars ?? '–';
+            document.getElementById('ui-alive').innerHTML   = `${alive}<span class="unit">/${pop}</span>`;
 
+            // Visualisations
             drawNetwork([data.inputs, ...data.hidden, data.outputs]);
             document.getElementById('net-shape').textContent =
                 [data.inputs.length, ...data.hidden.map(l => l.length), data.outputs.length].join(' → ');
-            drawMapAndCar(data.pos);
+            drawMapAndCar(data.pos, data.inputs, data.others);
+
             setStatus(true);
-        } catch (error) {
+        } catch {
             setStatus(false);
         }
+
         requestAnimationFrame(updateDashboard);
     }
 
-        function addLog(msg, kind) {
-            const log = document.getElementById('action-log');
-            if (!log) return;
-            const time = new Date().toLocaleTimeString();
-            const entry = document.createElement('div');
-            entry.className = 'entry' + (kind ? ' ' + kind : '');
-            entry.textContent = `[${time}] ${msg}`;
-            log.prepend(entry);
-            while (log.children.length > 5) log.removeChild(log.lastChild);
-        }
-
-        async function sendAction(endpoint, description) {
-            addLog(description);
-            try {
-                const res = await fetch(endpoint);
-                if (res.ok) {
-                    addLog(`Success: Command ${endpoint} executed.`, 'ok');
-                } else {
-                    addLog(`Error: Server responded with status ${res.status}`, 'err');
-                }
-            } catch (err) {
-                addLog(`Network Error: Failed to reach ${endpoint}`, 'err');
-            }
-        }
-
-        updateDashboard();
-    </script>
+    updateDashboard();
+</script>
 </body>
 </html>

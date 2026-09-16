@@ -22,6 +22,12 @@ debug_font = pygame.font.SysFont(None, 28)
 show_debug = False
 POP_SIZE = 200
 epoch = 1
+RESET_SIGNAL = "web/reset.signal"
+
+# Pre-load and scale sprites to prevent memory leaks during the loop
+img_normal = pygame.transform.scale(pygame.image.load("images/car.png").convert_alpha(), (40, 40))
+img_best = pygame.transform.scale(pygame.image.load("images/car_best.png").convert_alpha(), (40, 40))
+img_worst = pygame.transform.scale(pygame.image.load("images/car_worst.png").convert_alpha(), (40, 40))
 
 track_map = game.Track("src/map0/map.png")
 ai = serversocket.AICLient(host='localhost', port=8081)
@@ -61,11 +67,36 @@ while running:
                 epoch = 1
                 continue
 
+    # Check for web-dashboard-triggered reset
+    if os.path.exists(RESET_SIGNAL):
+        try:
+            os.remove(RESET_SIGNAL)
+        except OSError:
+            pass
+        epoch = 1
+        cars = spawn_population(POP_SIZE)
+        prev_steppings.clear()
+
     screen.fill((48, 51, 53))
     screen.blit(track_map.image, (0, 0))
 
-    # Filter out dead cars
+    # Filter out dead cars and sort them by fitness (best first)
     active_indices = [i for i, c in enumerate(cars) if c.alive]
+    active_indices.sort(key=lambda i: cars[i].fitness, reverse=True)
+
+    # Assign sprites based on performance rank
+    for rank, idx in enumerate(active_indices):
+        if rank == 0:
+            target_img = img_best
+        elif rank == len(active_indices) - 1 and len(active_indices) > 1:
+            target_img = img_worst
+        else:
+            target_img = img_normal
+            
+        # Only trigger an update if the sprite needs to change
+        if cars[idx].original_image is not target_img:
+            cars[idx].original_image = target_img
+            cars[idx].rotate(0) # Forces Pygame to re-render the image and collision mask
 
     # End of epoch if all cars are dead
     if not active_indices:
@@ -119,7 +150,8 @@ while running:
 
     lead_dashboard_updated = False
 
-    for idx in active_indices:
+    # Iterate backwards so the best cars are drawn last (on top)
+    for idx in reversed(active_indices):
         car = cars[idx]
         if idx in commands:
             st, th, hidden = commands[idx]
@@ -154,8 +186,9 @@ while running:
             if crashed or car.time_since_last_checkpoint > 4.0:
                 car.alive = False
 
-            # Update the web dashboard with the lead car's brain
-            if not lead_dashboard_updated:
+            # Update the web dashboard ONLY for the true lead car
+            # Update the web dashboard ONLY for the true lead car
+            if not lead_dashboard_updated and idx == active_indices[0]:
                 distances, _ = raycasting.get_data(car, track_map.mask, 2000)
                 speed_norm = speed / 200.0
                 angle_diff = (car.angle - angle_to_target + 180) % 360 - 180
@@ -163,6 +196,20 @@ while running:
                 
                 lead_inputs = [d / 250.0 for d in distances] + [speed_norm, angle_norm]
                 
+                # Gather positions of the rest of the pack
+                other_cars_data = []
+                for rank, other_idx in enumerate(active_indices):
+                    if rank == 0: 
+                        continue # Skip the lead car
+                    
+                    other_car = cars[other_idx]
+                    other_cars_data.append({
+                        "x": other_car.pos_x,
+                        "y": other_car.pos_y,
+                        "angle": other_car.angle,
+                        "is_worst": (rank == len(active_indices) - 1 and len(active_indices) > 1)
+                    })
+
                 network_state = {
                     "inputs": lead_inputs,
                     "hidden": hidden,  
@@ -179,7 +226,8 @@ while running:
                         "x": car.pos_x,
                         "y": car.pos_y,
                         "angle": car.angle
-                    }
+                    },
+                    "others": other_cars_data
                 }
                 
                 temp_path = "web/state.json.tmp"
@@ -193,7 +241,6 @@ while running:
                         os.replace(temp_path, target_path)
                         break
                     except PermissionError:
-                        import time
                         time.sleep(0.01)
                 
                 lead_dashboard_updated = True
