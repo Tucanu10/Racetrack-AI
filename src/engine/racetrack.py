@@ -1,12 +1,17 @@
 import sys
 import os
+import importlib
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pygame
 import game
 import debug
-import map0.checkpoints as checkpoints
+import config
+
+# Dynamically load the active map's checkpoints and image
+checkpoints = importlib.import_module(f"{config.ACTIVE_MAP}.checkpoints")
+MAP_IMAGE_PATH = f"src/{config.ACTIVE_MAP}/map.png"
 
 # ── Init ─────────────────────────────────────────────────────────────────────
 pygame.init()
@@ -18,16 +23,16 @@ debug_font = pygame.font.SysFont(None, 28)
 hud_font   = pygame.font.SysFont(None, 30)
 show_debug = False
 
-# Speed constants — same ceiling as the AI car
 MAX_SPEED = 200.0
 ACCEL     = 280.0   # units / s²  (acceleration while holding W)
 BRAKE     = 500.0   # units / s²  (deceleration while holding S)
 COAST     = 140.0   # units / s²  (passive deceleration)
 
-track_map = game.Track("src/map0/map.png")
+track_map = game.Track(MAP_IMAGE_PATH)
 
 def make_player():
-    p = game.Player("images/car.png", 83, 325)
+    start_x, start_y = getattr(checkpoints, 'START_POS', (83, 325))
+    p = game.Player("images/car.png", start_x, start_y)
     p.current_speed = 0.0
     return p
 

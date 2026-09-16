@@ -27,5 +27,6 @@ train:
 clean:
 	@echo "Cleaning cache files..."
 	@rm -rf src/**/*__pycache__
+	@rm -rf src/**/*.pyc
 	@rm -rf src/**/*.class
 	@rm -rf src/**/*.tmp

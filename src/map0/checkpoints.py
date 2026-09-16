@@ -1,6 +1,9 @@
 import pygame
 
-checkpoints = [\
+# Define the starting coordinates for the cars (x, y)
+START_POS = (83, 325)
+
+checkpoints = [
     # Checkpoint defined as pygame.Rect(lefttop, corner_y, width, height)
     # 1
     pygame.Rect(0, 180, 140, 20),

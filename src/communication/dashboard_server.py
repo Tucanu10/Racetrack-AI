@@ -1,13 +1,18 @@
 import os
+import sys
 import shutil
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 import serversocket
+import config
 
 WEB_DIR = "web"
 
 os.makedirs(os.path.join(WEB_DIR, "assets"), exist_ok=True)
-shutil.copy("src/map0/map.png", os.path.join(WEB_DIR, "assets", "map.png"))
+shutil.copy(f"src/{config.ACTIVE_MAP}/map.png", os.path.join(WEB_DIR, "assets", "map.png"))
 shutil.copy("images/car.png", os.path.join(WEB_DIR, "assets", "car.png"))
 shutil.copy("images/car_best.png", os.path.join(WEB_DIR, "assets", "car_best.png"))
 shutil.copy("images/car_worst.png", os.path.join(WEB_DIR, "assets", "car_worst.png"))
