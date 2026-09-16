@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 <<<<<<< HEAD
+<<<<<<< HEAD
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 import sys
 
